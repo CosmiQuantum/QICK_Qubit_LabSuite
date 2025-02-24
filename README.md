@@ -1,2 +1,2 @@
-# QUBIT_analysis
+# QUBIT_Analysis
 To be used with the QICK board

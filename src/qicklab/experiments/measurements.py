@@ -1,0 +1,71 @@
+import os
+import logging
+import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
+from qicklab.config.expt_config import expt_cfg
+from qicklab.hardware.build_state import all_qubit_state
+from qicklab.hardware.qick_programs import SingleToneSpectroscopyProgram
+from qicklab.utils.file_helpers import create_folder_if_not_exists
+from qicklab.analysis.plotting import plot_resonance_spectroscopy
+
+class ResonanceSpectroscopy:
+    def __init__(self, QubitIndex, number_of_qubits, outerFolder, round_num, save_figs,
+                 experiment=None, verbose=False, logger=None, qick_verbose = True):
+        self.qick_verbose = qick_verbose
+        self.QubitIndex = QubitIndex
+        self.number_of_qubits = number_of_qubits
+        self.outerFolder = outerFolder
+        self.expt_name = "res_spec"
+        self.Qubit = 'Q' + str(self.QubitIndex)
+        self.round_num = round_num
+        self.save_figs = save_figs
+        self.experiment = experiment
+        self.exp_cfg = expt_cfg[self.expt_name]
+        self.verbose = verbose
+        self.logger = logger if logger is not None else logging.getLogger("custom_logger_for_rr_only")
+        self.q_config = all_qubit_state(experiment, self.number_of_qubits)
+        self.config = {**self.q_config[self.Qubit], **self.exp_cfg}
+        self.logger.info(f'Q {self.QubitIndex + 1} Round {self.round_num} Res Spec configuration: {self.config}')
+        if self.verbose:
+            print(f'Q {self.QubitIndex + 1} Round {self.round_num} Res Spec configuration: ', self.config)
+
+    def run(self):
+        fpts = self.exp_cfg["start"] + self.exp_cfg["step_size"] * np.arange(self.exp_cfg["steps"])
+        fcenter = self.config['res_freq_ge']
+        amps = np.zeros((len(fcenter), len(fpts)))
+
+        for index, f in enumerate(tqdm(fpts)):
+            self.config["res_freq_ge"] = fcenter + f
+
+            prog = SingleToneSpectroscopyProgram(
+                self.experiment.soccfg,
+                reps=self.exp_cfg["reps"],
+                final_delay=0.5,
+                cfg=self.config
+            )
+            iq_list = prog.acquire(self.experiment.soc, soft_avgs=self.exp_cfg["rounds"], progress=self.qick_verbose)
+            for i in range(len(self.config['res_freq_ge'])):
+                amps[i][index] = np.abs(iq_list[i][:, 0] + 1j * iq_list[i][:, 1])
+
+        amps = np.array(amps)
+
+        res_freqs = plot_resonance_spectroscopy(
+            qubit_index=self.QubitIndex,
+            fpts=fpts,
+            fcenter=fcenter,
+            amps=amps,
+            number_of_qubits=self.number_of_qubits,
+            round_num=self.round_num,
+            config=self.config,
+            outerFolder=self.outerFolder,
+            expt_name=self.expt_name,
+            experiment=self.experiment,
+            save_figs=self.save_figs,
+            reloaded_config=None,
+            fig_quality=100
+        )
+        return res_freqs, fpts, fcenter, amps, self.config
+

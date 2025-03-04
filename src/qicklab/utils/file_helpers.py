@@ -1,7 +1,5 @@
-import os
+import os, visdom, logging
 import numpy as np
-import visdom
-import logging
 
 def create_folder_if_not_exists(folder):
     """

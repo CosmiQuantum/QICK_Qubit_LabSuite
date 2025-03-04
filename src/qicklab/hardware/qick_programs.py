@@ -1,5 +1,4 @@
-import copy
-import logging
+import copy, logging
 import numpy as np
 from qick.asm_v2 import AveragerProgramV2
 

@@ -7,14 +7,14 @@ import logging
 import datetime
 import numpy as np
 
-n= 100000
+num_data_rounds = 100000
 save_r = 1                           # how many rounds to save after
-signal = 'None'                      # 'I', or 'Q' depending on where the signal is (after optimization). Put 'None' if no optimization
+readout_signal = 'None'                      # 'I', or 'Q' depending on where the signal is (after optimization). Put 'None' if no optimization
 save_figs = True                     # save plots for everything as you go along the RR script?
 live_plot = False                     # for live plotting do "visdom" in comand line and then open http://localhost:8097/ on firefox
-fit_data = True                      # fit the data here and save or plot the fits?
+fit_data_in_real_time = True                      # fit the data here and save or plot the fits?
 save_data_h5 = True                  # save all of the data to h5 files?
-verbose =True                      # print everything to the console in real time, good for debugging, bad for memory
+rr_verbose = True                      # print everything to the console in real time, good for debugging, bad for memory
 qick_verbose=True
 debug_mode = True                   # if True, it disables the continuing function of RR if an error pops up in a class -- errors now stop the RR script
 thresholding = True                 #use internal QICK threshold for ratio of Binary values on y for rabi/t1/t2r/t2e, or analog avg when false

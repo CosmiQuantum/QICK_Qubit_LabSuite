@@ -89,93 +89,93 @@ if FRIDGE == "QUIET":
             "list_of_all_qubits": list_of_all_qubits,
         },
 
-        # "Ramsey_ge": {
-        #     "reps": 500, #300
-        #     "rounds": 1,#10
-        #     "start": [0.0] * 6, # [us]
-        #     "stop":  [60] * 6, # [us]
-        #     "steps": 100,
-        #     "ramsey_freq": 0.12,  # [MHz]
-        #     "relax_delay": 1000, # [us] the time to wait to let the qubit to relax to gnd again after exciting it (make it way above T1)
-        #     "wait_time": 0.0, # [us]
-        #     "list_of_all_qubits": list_of_all_qubits,
-        # },
-        #
-        # "SpinEcho_ge": {
-        #     "reps": 500,
-        #     "rounds": 1,
-        #     "start": [0.0] * 6, # [us]
-        #     "stop":  [60] * 6, # [us]
-        #     "steps": 100,
-        #     "ramsey_freq": 0.12,  # [MHz]
-        #     "relax_delay": 1000, # [us]
-        #     "wait_time": 0.0, # [us]
-        #     "list_of_all_qubits": list_of_all_qubits,
-        # },
-    #
+        "Ramsey_ge": {
+            "reps": 500, #300
+            "rounds": 1,#10
+            "start": [0.0] * 6, # [us]
+            "stop":  [60] * 6, # [us]
+            "steps": 100,
+            "ramsey_freq": 0.12,  # [MHz]
+            "relax_delay": 1000, # [us] the time to wait to let the qubit to relax to gnd again after exciting it (make it way above T1)
+            "wait_time": 0.0, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
 
+        "SpinEcho_ge": {
+            "reps": 500,
+            "rounds": 1,
+            "start": [0.0] * 6, # [us]
+            "stop":  [60] * 6, # [us]
+            "steps": 100,
+            "ramsey_freq": 0.12,  # [MHz]
+            "relax_delay": 1000, # [us]
+            "wait_time": 0.0, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+
+
+        "res_spec_ef": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [7148, 0, 7202, 0, 0, 0], # [MHz]
+            "stop":  [7151, 0, 7207, 0, 0, 0], # [MHz]
+            "steps": 200,
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "qubit_spec_ef": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [2750, 0, 0, 0, 0, 0], # [MHz]
+            "stop":  [2850, 0, 0, 0, 0, 0], # [MHz]
+            "steps": 500,
+            "relax_delay": 1000, # [us]
+                "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "qubit_temp": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [0.02] * 6, # [us]
+            "expts":  [200] * 6,
+            "step": 0.02, # [us]
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "power_rabi_ef": {
+            "reps": 1000,
+            "py_avg": 10,
+            "start": [0.0] * 6, # [DAC units]
+            "stop":  [1.0] * 6, # [DAC units]
+            "steps": 100,
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "Ramsey_ef": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [0.0] * 6, # [us]
+            "stop":  [100] * 6, # [us]
+            "steps": 100,
+            "ramsey_freq": 0.05,  # [MHz]
+            "relax_delay": 1000, # [us]
+            "wait_time": 0.0, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "IQ_plot":{
+            "steps": 5000, # shots
+            "py_avg": 1,
+            "reps": 1,
+            "relax_delay": 1000, # [us]
+            "SS_ONLY": False,
+            "list_of_all_qubits": list_of_all_qubits,
+        },
     #
-    #     "res_spec_ef": {
-    #         "reps": 100,
-    #         "py_avg": 10,
-    #         "start": [7148, 0, 7202, 0, 0, 0], # [MHz]
-    #         "stop":  [7151, 0, 7207, 0, 0, 0], # [MHz]
-    #         "steps": 200,
-    #         "relax_delay": 1000, # [us]
-    #         "list_of_all_qubits": list_of_all_qubits,
-    #     },
-    #
-    #     "qubit_spec_ef": {
-    #         "reps": 100,
-    #         "py_avg": 10,
-    #         "start": [2750, 0, 0, 0, 0, 0], # [MHz]
-    #         "stop":  [2850, 0, 0, 0, 0, 0], # [MHz]
-    #         "steps": 500,
-    #         "relax_delay": 1000, # [us]
-        #         "list_of_all_qubits": list_of_all_qubits,
-    #     },
-    #
-        # "qubit_temp": {
-        #     "reps": 100,
-        #     "py_avg": 10,
-        #     "start": [0.02] * 6, # [us]
-        #     "expts":  [200] * 6,
-        #     "step": 0.02, # [us]
-        #     "relax_delay": 1000, # [us]
-        #     "list_of_all_qubits": list_of_all_qubits,
-        # },
-    #
-    #     "power_rabi_ef": {
-    #         "reps": 1000,
-    #         "py_avg": 10,
-    #         "start": [0.0] * 6, # [DAC units]
-    #         "stop":  [1.0] * 6, # [DAC units]
-    #         "steps": 100,
-    #         "relax_delay": 1000, # [us]
-    #         "list_of_all_qubits": list_of_all_qubits,
-    #     },
-    #
-    #     "Ramsey_ef": {
-    #         "reps": 100,
-    #         "py_avg": 10,
-    #         "start": [0.0] * 6, # [us]
-    #         "stop":  [100] * 6, # [us]
-    #         "steps": 100,
-    #         "ramsey_freq": 0.05,  # [MHz]
-    #         "relax_delay": 1000, # [us]
-    #         "wait_time": 0.0, # [us]
-    #         "list_of_all_qubits": list_of_all_qubits,
-    #     },
-    #
-    #     "IQ_plot":{
-    #         "steps": 5000, # shots
-    #         "py_avg": 1,
-    #         "reps": 1,
-    #         "relax_delay": 1000, # [us]
-    #         "SS_ONLY": False,
-    #         "list_of_all_qubits": list_of_all_qubits,
-    #     },
-    # #
         "Readout_Optimization":{
             "steps": 3000, # shots
             "py_avg": 1,
@@ -216,15 +216,15 @@ elif FRIDGE == "NEXUS":
             "list_of_all_qubits": list_of_all_qubits,
         },
 
-        # "res_spec": { # Works for PUNCHOUT only 1/23 to do
-        #     "reps": 500,
-        #     "rounds": 1,
-        #     "start": list(VNA_res - 1),  # [MHz]
-        #     "stop": list(VNA_res + 1),
-        #     "steps": 101,
-        #     "relax_delay": 20,  # [us]
-        #     "list_of_all_qubits": list_of_all_qubits,
-        # },
+        "res_spec": { # Works for PUNCHOUT only 1/23 to do
+            "reps": 500,
+            "rounds": 1,
+            "start": list(VNA_res - 1),  # [MHz]
+            "stop": list(VNA_res + 1),
+            "steps": 101,
+            "relax_delay": 20,  # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
 
         "qubit_spec_ge": {
             "reps": 700,  # 100
@@ -317,71 +317,71 @@ elif FRIDGE == "NEXUS":
             "rounds": 1,
             "relax_delay": 500,  # [us]
             "wait_time": 1 / (4 * (2.5)),  # [us]
-        }
-        #
+        },
 
-        #
-        #     "res_spec_ef": {
-        #         "reps": 100,
-        #         "py_avg": 10,
-        #         "start": [7148, 0, 7202, 0, 0, 0], # [MHz]
-        #         "stop":  [7151, 0, 7207, 0, 0, 0], # [MHz]
-        #         "steps": 200,
-        #         "relax_delay": 1000, # [us]
-        #         "list_of_all_qubits": list_of_all_qubits,
-        #     },
-        #
-        #     "qubit_spec_ef": {
-        #         "reps": 100,
-        #         "py_avg": 10,
-        #         "start": [2750, 0, 0, 0, 0, 0], # [MHz]
-        #         "stop":  [2850, 0, 0, 0, 0, 0], # [MHz]
-        #         "steps": 500,
-        #         "relax_delay": 1000, # [us]
-        #         "list_of_all_qubits": list_of_all_qubits,
-        #     },
-        #
-        #     "qubit_temp": {
-        #         "reps": 100,
-        #         "py_avg": 10,
-        #         "start": [0.02] * 6, # [us]
-        #         "expts":  [200] * 6,
-        #         "step": 0.02, # [us]
-        #         "relax_delay": 1000, # [us]
-        #         "list_of_all_qubits": list_of_all_qubits,
-        #     },
-        #
-        #     "power_rabi_ef": {
-        #         "reps": 1000,
-        #         "py_avg": 10,
-        #         "start": [0.0] * 6, # [DAC units]
-        #         "stop":  [1.0] * 6, # [DAC units]
-        #         "steps": 100,
-        #         "relax_delay": 1000, # [us]
-        #         "list_of_all_qubits": list_of_all_qubits,
-        #     },
-        #
-        #     "Ramsey_ef": {
-        #         "reps": 100,
-        #         "py_avg": 10,
-        #         "start": [0.0] * 6, # [us]
-        #         "stop":  [100] * 6, # [us]
-        #         "steps": 100,
-        #         "ramsey_freq": 0.05,  # [MHz]
-        #         "relax_delay": 1000, # [us]
-        #         "wait_time": 0.0, # [us]
-        #         "list_of_all_qubits": list_of_all_qubits,
-        #     },
-        #
-        #     "IQ_plot":{
-        #         "steps": 5000, # shots
-        #         "py_avg": 1,
-        #         "reps": 1,
-        #         "relax_delay": 1000, # [us]
-        #         "SS_ONLY": False,
-        #         "list_of_all_qubits": list_of_all_qubits,
-        #     },
-        #
+
+
+        "res_spec_ef": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [7148, 0, 7202, 0, 0, 0], # [MHz]
+            "stop":  [7151, 0, 7207, 0, 0, 0], # [MHz]
+            "steps": 200,
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "qubit_spec_ef": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [2750, 0, 0, 0, 0, 0], # [MHz]
+            "stop":  [2850, 0, 0, 0, 0, 0], # [MHz]
+            "steps": 500,
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "qubit_temp": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [0.02] * 6, # [us]
+            "expts":  [200] * 6,
+            "step": 0.02, # [us]
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "power_rabi_ef": {
+            "reps": 1000,
+            "py_avg": 10,
+            "start": [0.0] * 6, # [DAC units]
+            "stop":  [1.0] * 6, # [DAC units]
+            "steps": 100,
+            "relax_delay": 1000, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "Ramsey_ef": {
+            "reps": 100,
+            "py_avg": 10,
+            "start": [0.0] * 6, # [us]
+            "stop":  [100] * 6, # [us]
+            "steps": 100,
+            "ramsey_freq": 0.05,  # [MHz]
+            "relax_delay": 1000, # [us]
+            "wait_time": 0.0, # [us]
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
+        "IQ_plot":{
+            "steps": 5000, # shots
+            "py_avg": 1,
+            "reps": 1,
+            "relax_delay": 1000, # [us]
+            "SS_ONLY": False,
+            "list_of_all_qubits": list_of_all_qubits,
+        },
+
 
     }
 

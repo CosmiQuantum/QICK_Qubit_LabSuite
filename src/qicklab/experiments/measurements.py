@@ -1,15 +1,13 @@
-import os
-import logging
-import datetime
+import os, logging, datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from qicklab.config.expt_config import expt_cfg
-from qicklab.hardware.build_state import all_qubit_state
-from qicklab.hardware.qick_programs import SingleToneSpectroscopyProgram
-from qicklab.utils.file_helpers import create_folder_if_not_exists
-from qicklab.analysis.plotting import plot_resonance_spectroscopy
+from ..config.expt_config import expt_cfg
+from ..hardware.build_state import all_qubit_state
+from ..hardware.qick_programs import SingleToneSpectroscopyProgram
+from ..utils.file_helpers import create_folder_if_not_exists
+from ..analysis.plotting import plot_resonance_spectroscopy
 
 class ResonanceSpectroscopy:
     def __init__(self, QubitIndex, number_of_qubits, outerFolder, round_num, save_figs,

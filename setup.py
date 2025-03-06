@@ -10,5 +10,14 @@ setup(
         "visdom",
         "numpy",
         "tqdm",
+        "scipy",
+        "ast",
+        "datetime",
+        "glob",
+        "os",
+        "re",
+        "h5py",
+        "allantools",
+        "math"
     ],
 )

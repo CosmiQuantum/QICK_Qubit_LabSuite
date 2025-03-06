@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from ..config.expt_config import expt_cfg
+#from ..config.round_robin_config import save_figs
 from ..hardware.build_state import all_qubit_state
 from ..hardware.qick_programs import SingleToneSpectroscopyProgram
-from ..utils.file_helpers import create_folder_if_not_exists
-from ..analysis.plotting import plot_resonance_spectroscopy
+from ..utils.file_helpers import create_folder_if_not_exists, extract_resonator_frequencies
+from ..analysis.plotting import plot_spectroscopy
 
 class ResonanceSpectroscopy:
     def __init__(self, QubitIndex, number_of_qubits, outerFolder, round_num, save_figs,
@@ -50,20 +51,33 @@ class ResonanceSpectroscopy:
 
         amps = np.array(amps)
 
-        res_freqs = plot_resonance_spectroscopy(
-            qubit_index=self.QubitIndex,
-            fpts=fpts,
-            fcenter=fcenter,
-            amps=amps,
-            number_of_qubits=self.number_of_qubits,
-            round_num=self.round_num,
-            config=self.config,
-            outerFolder=self.outerFolder,
-            expt_name=self.expt_name,
-            experiment=self.experiment,
-            save_figs=self.save_figs,
-            reloaded_config=None,
-            fig_quality=100
-        )
+        if self.save_figs:
+            res_freqs = plot_spectroscopy(
+                qubit_index=self.QubitIndex,
+                fpts=fpts,
+                fcenter=fcenter,
+                amps=amps,
+                round_num=self.round_num,
+                config=self.config,
+                outerFolder=self.outerFolder,
+                expt_name=self.expt_name,
+                experiment=self.experiment,
+                save_figs=self.save_figs,
+                fig_quality=100,
+                title_word="Resonator",
+                xlabel="Frequency (MHz)",
+                ylabel="Amplitude (a.u.)",
+                find_min=True,
+                plot_min_line=True,
+                include_min_in_title=True,
+                return_min=True,
+                fig_filename=None
+            )
+        else:
+            res_freqs = extract_resonator_frequencies(
+                    fpts,  # dict: keys are qubit indices (0 means qubit 1) and values are (x_data, y_data)
+                    process_offset=True,
+                    offsets=fcenter  # dict: keys matching those in data, with offset frequency values
+            )
         return res_freqs, fpts, fcenter, amps, self.config
 

@@ -26,14 +26,6 @@
       "steps": 101,
       "relax_delay": 20
     },
-    "res_spec": {
-      "reps": 500,
-      "rounds": 1,
-      "res_start_offset_from_vna_val": -1,
-      "res_stop_offset_from_vna_val": 1,
-      "steps": 101,
-      "relax_delay": 20
-    },
     "qubit_spec_ge": {
       "reps": 700,
       "rounds": 1,

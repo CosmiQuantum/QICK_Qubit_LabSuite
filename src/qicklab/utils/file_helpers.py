@@ -40,3 +40,48 @@ def configure_logging(log_file):
     rr_logger.propagate = False  # dont propagate logs from underlying qick package
 
     return rr_logger
+
+
+def extract_resonator_frequencies(
+        data,  # dict: keys are qubit indices (0 means qubit 1) and values are (x_data, y_data)
+        process_offset=False,
+        offsets=None  # dict: keys matching those in data, with offset frequency values
+):
+    """
+    Extracts the resonance frequencies for each qubit based on the provided data.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary where each key is a qubit index (0 means qubit 1) and each value is a tuple or list
+        containing the x_data and y_data arrays for that qubit.
+    process_offset : bool, optional
+        If True, each qubit's x_data is shifted by an offset provided in the offsets dictionary.
+    offsets : dict, optional
+        Dictionary of offset frequencies to add to each qubit's x_data (keys must match those in data)
+        when process_offset is True.
+
+    Returns
+    -------
+    dict
+        Dictionary where each key is a qubit index and each value is the computed resonance frequency
+        (x value corresponding to the minimum y value), rounded to 4 decimals.
+    """
+    res_freqs = {}
+    for qkey, (x_vals, y_vals) in data.items():
+        x_vals = np.array(x_vals)
+        y_vals = np.array(y_vals)
+
+        # Apply offset if required.
+        if process_offset:
+            if offsets is None or qkey not in offsets:
+                raise ValueError(
+                    "Offsets must be provided as a dict with keys matching those in data when process_offset is True.")
+            x_vals = x_vals + offsets[qkey]
+
+        # Compute the resonance frequency: x value at the minimum y value.
+        min_index = np.argmin(y_vals)
+        res_freq = x_vals[min_index]
+        res_freqs[qkey] = round(res_freq, 4)
+
+    return res_freqs

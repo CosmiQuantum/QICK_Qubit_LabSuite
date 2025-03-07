@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import StrMethodFormatter
 import matplotlib.dates as mdates
 from ..utils.file_helpers import create_folder_if_not_exists
+from .data_processing import *
 
 
 def plot_spectroscopy(
@@ -349,7 +350,7 @@ def scatter_plot_vs_time_with_fit_errs(date_times, y_data, fit_err, number_of_qu
 
 def plot_histogram_with_gaussian(data_dict, date_dict, save_name='', save_folder_path='', data_type='',
                                  x_label='', y_label='',
-                                 show_legends=False, final_figure_quality=300, n_cols=3):
+                                 show_legends=False, final_figure_quality=300, n_cols=3, bin_count=50):
     """
     Plot a histogram for each dataset with an overlaid Gaussian fit.
 
@@ -402,7 +403,6 @@ def plot_histogram_with_gaussian(data_dict, date_dict, save_name='', save_folder
     gaussian_fit_data = {}
     mean_values = {}
     std_values = {}
-    optimal_bin_num = 50  # Can be modified or parameterized.
 
     for i, ax in enumerate(axes):
         if i not in data_dict:
@@ -423,17 +423,17 @@ def plot_histogram_with_gaussian(data_dict, date_dict, save_name='', save_folder
             std_values[f"{data_type} {i + 1}"] = sigma
 
             # Generate points for the Gaussian curve.
-            x_vals = np.linspace(min(data), max(data), optimal_bin_num)
+            x_vals = np.linspace(min(data), max(data), bin_count)
             pdf_vals = norm.pdf(x_vals, mu, sigma)
 
             # Obtain histogram data for scaling.
-            hist_data, bins = np.histogram(data, bins=optimal_bin_num)
+            hist_data, bins = np.histogram(data, bins=bin_count)
             scale_factor = np.diff(bins) * hist_data.sum()
             ax.plot(x_vals, pdf_vals * scale_factor, linestyle='--', linewidth=2,
                     color=colors[i % len(colors)])
 
             # Plot the histogram.
-            ax.hist(data, bins=optimal_bin_num, alpha=0.7, color=colors[i % len(colors)],
+            ax.hist(data, bins=bin_count, alpha=0.7, color=colors[i % len(colors)],
                     edgecolor='black', label=date_label)
 
             # For smoother plotting (e.g., cumulative curves), compute more points.
@@ -599,38 +599,18 @@ def plot_error_vs_value(data_dict, error_dict, save_name='', save_folder_path=''
     plt.close(fig)
 
 def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="T1",
-                         save_folder_path='', final_figure_quality=100):
+                                                   save_folder_path='', final_figure_quality=100):
     """
     Plot the overlapping Allan deviation for each qubit, excluding large gaps in the data.
 
     For each qubit, the function:
       1. Sorts timestamps and measurement values.
-      2. Splits the data into continuous segments based on a gap threshold.
-      3. Selects the largest continuous segment.
-      4. Resamples the data in that segment onto a uniform grid.
-      5. Computes the overlapping Allan deviation using allantools.
-      6. Plots the Allan deviation on a log–log scale.
-
-    Parameters
-    ----------
-    date_times : list of lists
-        Each element is a list of date/time objects for a qubit.
-    vals : list of lists
-        Each element is a list of measurement values for a qubit.
-    number_of_qubits : int
-        Number of qubits (each will be plotted in a separate subplot).
-    show_legends : bool, optional
-        If True, display legends in the subplots.
-    label : str, optional
-        Label for the measurement (used in the title and y–axis; default is "T1").
-    save_folder_path : str, optional
-        Folder path where the plot image will be saved.
-    final_figure_quality : int, optional
-        DPI for the saved plot (default is 100).
-
-    Returns
-    -------
-    None
+      2. Converts timestamps to seconds relative to the first measurement.
+      3. Splits the data into continuous segments based on a gap threshold.
+      4. Selects the largest continuous segment.
+      5. Resamples the data in that segment onto a uniform grid.
+      6. Computes the overlapping Allan deviation using allantools.
+      7. Plots the Allan deviation on a log–log scale.
     """
     # Ensure the folder exists.
     create_folder_if_not_exists(save_folder_path)
@@ -651,58 +631,40 @@ def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_q
 
         ax.set_title(titles[i], fontsize=font)
 
-        # Retrieve the measurement values and datetime objects for this qubit.
         data = vals[i]
         dt_objs = date_times[i]
 
-        # Zip and sort the data by time (ascending).
-        combined = list(zip(dt_objs, data))
-        combined.sort(key=lambda x: x[0])
-        if combined:
-            sorted_times, sorted_vals = zip(*combined)
-        else:
-            sorted_times, sorted_vals = [], []
+        # Sort the data using the helper function.
+        sorted_times, sorted_vals = sort_date_time_data(dt_objs, data)
+        if not sorted_times:
+            ax.text(0.5, 0.5, "No data available", ha='center', va='center', transform=ax.transAxes)
             continue
 
-
         # Convert sorted times to seconds relative to the first measurement.
-        t0 = sorted_times[0]
-        time_sec = np.array([(t - t0).total_seconds() for t in sorted_times])
+        time_sec = convert_datetimes_to_seconds(sorted_times)
         vals_array = np.array(sorted_vals, dtype=float)
 
         if len(time_sec) <= 1:
             ax.text(0.5, 0.5, "Not enough points", ha='center', va='center', transform=ax.transAxes)
             continue
 
-        # -------- Identify and remove large gaps --------
-        # Compute time differences between consecutive measurements.
-        dt_diffs = np.diff(time_sec)
-        # Define a gap threshold; here we use 5 times the median of the differences.
-        gap_threshold = 5 * np.median(dt_diffs)
-        # Split the data into continuous segments wherever the gap exceeds the threshold.
-        split_indices = np.where(dt_diffs > gap_threshold)[0] + 1
-        segments_time = np.split(time_sec, split_indices)
-        segments_vals = np.split(vals_array, split_indices)
-        # Choose the largest continuous segment.
-        lengths = [len(seg) for seg in segments_time]
-        max_idx = np.argmax(lengths)
-        time_sec_cont = segments_time[max_idx]
-        vals_cont = segments_vals[max_idx]
+        # Split the data into continuous segments using the helper function.
+        segments_time, segments_vals = split_into_continuous_segments(time_sec, vals_array, gap_threshold_factor=5)
 
+        # Choose the largest continuous segment using the helper.
+        time_sec_cont, vals_cont = get_longest_continuous_segment(segments_time, segments_vals)
         if len(time_sec_cont) <= 1:
             ax.text(0.5, 0.5, "Not enough continuous points", ha='center', va='center', transform=ax.transAxes)
             continue
-        # -------------------------------------------------
 
-        # -------- Resample the continuous segment onto a uniform grid --------
-        # Calculate the median time difference for the continuous segment.
+        # Resample the continuous segment onto a uniform grid.
         dt_diffs_cont = np.diff(time_sec_cont)
         uniform_dt = np.median(dt_diffs_cont)
-        # Create a new time grid from the start to the end of the continuous segment.
         new_time = np.arange(time_sec_cont[0], time_sec_cont[-1], uniform_dt)
-        # Interpolate the measurement values onto the uniform time grid.
         uniform_vals = np.interp(new_time, time_sec_cont, vals_cont)
-        # -------------------------------------------------------------------------
+        if len(new_time) < 2:
+            ax.text(0.5, 0.5, "Not enough resampled points", ha='center', va='center', transform=ax.transAxes)
+            continue
 
         # Calculate the uniform sample rate.
         rate = 1.0 / uniform_dt
@@ -732,40 +694,12 @@ def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_q
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
+
 def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="T1",
-                                save_folder_path='', final_figure_quality=100):
+                                                            save_folder_path='', final_figure_quality=100):
     """
     Plot the spectral density of fluctuations using Welch's method for each qubit,
     using only the largest continuous segment of data resampled onto a uniform grid.
-
-    For each qubit, the function:
-      1. Sorts the timestamps and measurement values.
-      2. Splits the data into continuous segments based on a gap threshold.
-      3. Selects the largest continuous segment.
-      4. Resamples the segment onto a uniform time grid using the median time difference.
-      5. Computes the Power Spectral Density (PSD) using Welch's method.
-      6. Plots the PSD on a log–log scale.
-
-    Parameters
-    ----------
-    date_times : list of lists
-        Each element is a list of date/time objects for a qubit.
-    vals : list of lists
-        Each element is a list of measurement values for a qubit.
-    number_of_qubits : int
-        Number of qubits (determines the number of subplots).
-    show_legends : bool, optional
-        If True, displays legends in the subplots.
-    label : str, optional
-        Label for the measurement (used in axis labels; default is "T1").
-    save_folder_path : str, optional
-        Folder path where the figure will be saved.
-    final_figure_quality : int, optional
-        DPI for saving the figure (default is 100).
-
-    Returns
-    -------
-    None
     """
     create_folder_if_not_exists(save_folder_path)
 
@@ -788,37 +722,25 @@ def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, numb
         data = vals[i]
         dt_objs = date_times[i]
 
-        # Zip and sort the data by time.
-        combined = list(zip(dt_objs, data))
-        combined.sort(key=lambda x: x[0])
-        if combined:
-            sorted_times, sorted_vals = zip(*combined)
-        else:
+        # Sort the data using the helper function.
+        sorted_times, sorted_vals = sort_date_time_data(dt_objs, data)
+        if not sorted_times:
             ax.text(0.5, 0.5, "No data available", ha='center', va='center', transform=ax.transAxes)
             continue
 
         # Convert times to seconds relative to the first measurement.
-        t0 = sorted_times[0]
-        time_sec = np.array([(t - t0).total_seconds() for t in sorted_times])
+        time_sec = convert_datetimes_to_seconds(sorted_times)
         vals_array = np.array(sorted_vals, dtype=float)
 
         if len(time_sec) <= 1:
             ax.text(0.5, 0.5, "Not enough points", ha='center', va='center', transform=ax.transAxes)
             continue
 
-        # Identify and remove large gaps.
-        dt_diffs = np.diff(time_sec)
-        gap_threshold = 5 * np.median(dt_diffs)
-        split_indices = np.where(dt_diffs > gap_threshold)[0] + 1
-        segments_time = np.split(time_sec, split_indices)
-        segments_vals = np.split(vals_array, split_indices)
+        # Split the data into continuous segments.
+        segments_time, segments_vals = split_into_continuous_segments(time_sec, vals_array, gap_threshold_factor=5)
 
-        # Choose the largest continuous segment.
-        lengths = [len(seg) for seg in segments_time]
-        max_idx = np.argmax(lengths)
-        time_sec_cont = segments_time[max_idx]
-        vals_cont = segments_vals[max_idx]
-
+        # Choose the largest continuous segment using the helper.
+        time_sec_cont, vals_cont = get_longest_continuous_segment(segments_time, segments_vals)
         if len(time_sec_cont) <= 1:
             ax.text(0.5, 0.5, "Not enough continuous points", ha='center', va='center', transform=ax.transAxes)
             continue
@@ -828,7 +750,6 @@ def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, numb
         uniform_dt = np.median(dt_diffs_cont)
         new_time = np.arange(time_sec_cont[0], time_sec_cont[-1], uniform_dt)
         uniform_vals = np.interp(new_time, time_sec_cont, vals_cont)
-
         if len(new_time) < 2:
             ax.text(0.5, 0.5, "Not enough resampled points", ha='center', va='center', transform=ax.transAxes)
             continue
@@ -1050,7 +971,7 @@ def plot_welch_spectral_density(date_times, vals, number_of_qubits, show_legends
     plt.close(fig)
 
 def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="T1",
-                                       save_folder_path='', final_figure_quality=100):
+                                       save_folder_path='', final_figure_quality=100, log_freqs=False):
     """
     Plot the spectral density of fluctuations using the Lomb–Scargle periodogram for each qubit.
 
@@ -1134,9 +1055,12 @@ def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_
         median_dt = np.median(np.diff(time_sec))
         f_max = 0.5 / median_dt if median_dt > 0 else 1.0
 
-        # Create a logarithmically spaced frequency grid.
         n_freq = 1000  # number of frequency points
-        frequencies = np.logspace(np.log10(f_min), np.log10(f_max), n_freq)
+        if log_freqs:
+            #log spaced frequency grid to give better resolution at low frequencies (compare to without doing this later)
+            frequencies = np.logspace(np.log10(f_min), np.log10(f_max), n_freq)
+        else:
+            frequencies = np.linspace(f_min, f_max, n_freq)
         # Convert frequencies (Hz) to angular frequencies (rad/s) for lombscargle.
         angular_frequencies = 2 * np.pi * frequencies
         # -----------------------------------------------------------
@@ -1144,7 +1068,7 @@ def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_
         # ---------------- Compute Lomb–Scargle Periodogram ----------------
         # The lombscargle function computes the raw power at each angular frequency.
         # 'precenter=True' subtracts the mean from the data before processing.
-        power = lombscargle(time_sec, vals_array, angular_frequencies, precenter=True)
+        power = lombscargle(time_sec, vals_array, angular_frequencies) #, precenter=True?
         # --------------------------------------------------------------------
 
         # Plot the periodogram on a log–log scale.

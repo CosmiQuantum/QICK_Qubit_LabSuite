@@ -53,12 +53,32 @@ decoherence_times, fit_errs, date_times = get_decoherence_time_and_dates(number_
 # plot_allan_deviation(date_times, decoherence_times, number_of_qubits, show_legends=False, label="T1",
 #                          save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100) #assumes uniform
 # plot_lomb_scargle_spectral_density(date_times, decoherence_times, number_of_qubits, show_legends=False, label="T1",
-#                                 save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100)
+#                                 save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100,
+#                                 log_freqs=False)
+#
+# plot_allan_deviation_largest_continuous_sample(date_times, decoherence_times, number_of_qubits, show_legends=False, label="T1",
+#                          save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100)
+# plot_welch_spectral_density_largest_continuous_sample(date_times, decoherence_times, number_of_qubits, show_legends=False, label="T1",
+#                                                       save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100)
 
-plot_allan_deviation_largest_continuous_sample(date_times, decoherence_times, number_of_qubits, show_legends=False, label="T1",
-                         save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100)
-plot_welch_spectral_density_largest_continuous_sample(date_times, decoherence_times, number_of_qubits, show_legends=False, label="T1",
-                                                      save_folder_path='/Users/olivias-local/Downloads/Test_plotting/', final_figure_quality=100)
+# Look at time differences between t1 samples for the data that is used in the WSD and Allan Dev functions above
+dt_diffs_cont_dict = {}
+for key in date_times.keys():
+    sorted_times, sorted_vals = sort_date_time_data(date_times[key], decoherence_times[key])
+    time_sec = convert_datetimes_to_seconds(sorted_times)
+    vals_array = np.array(sorted_vals, dtype=float)
+    segments_time, segments_vals = split_into_continuous_segments(time_sec, vals_array, gap_threshold_factor=5)
+    times, vals = get_longest_continuous_segment(segments_time, segments_vals)
+    dt_diffs_cont = np.diff(times)
+    dt_diffs_cont_dict[key] = dt_diffs_cont
+
+gaussian_data, means, stds = plot_histogram_with_gaussian(data_dict=dt_diffs_cont_dict, date_dict=date_times,
+                                                          save_name='t1_measurement_time_diffs',
+                                                          save_folder_path = '/Users/olivias-local/Downloads/Test_plotting/',
+                                                          data_type='T1', x_label='T1 measurement time differences (s)',
+                                                          y_label='Frequency', bin_count = 10)
+
+
 del decoherence_times, fit_errs, date_times
 
 

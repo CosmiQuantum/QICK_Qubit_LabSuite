@@ -8,3 +8,4 @@ from .utils.file_helpers import *
 from .analysis.plotting import *
 from .analysis.h5_data import *
 from .experiments.measurements import *
+from .analysis.data_processing import *

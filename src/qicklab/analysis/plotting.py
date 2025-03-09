@@ -38,6 +38,106 @@ from ..utils.file_helpers import create_folder_if_not_exists
 from .data_processing import *
 
 
+def plot_spec_results_individually(I, Q, freqs, title_start='', spec=False, largest_amp_curve_mean=None,
+                                   largest_amp_curve_fwhm=None,
+                                   I_fit=None, Q_fit=None,
+                                   qubit_index=None, config=None, outer_folder=None,
+                                   expt_name=None, round_num=None, h5_filename = None, fig_quality=100):
+    """
+    Plots I and Q data with optional Lorentzian fitting for qubit spectroscopy.
+
+    Parameters:
+      I, Q: Arrays of measured amplitudes.
+      freqs: Frequency values (list or numpy array).
+      title: Base title for the plot.
+      spec (bool): If True, perform Lorentzian fit and add spectroscopy info to title.
+      fit_func (callable): Function to perform the Lorentzian fit. Should accept (I, Q, freqs, freq_q)
+                           and return (mean_I, mean_Q, I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err).
+                           Required if spec is True.
+      qubit_index (int): Qubit index (0-indexed) to be used in the title when spec is True.
+      config (dict): Optional configuration dictionary containing 'reps' and 'rounds' keys.
+      save_figs (bool): If True, save the figure.
+      outer_folder (str): Folder path to save the figure (required if save_figs is True).
+      expt_name (str): Experiment name (required if save_figs is True).
+      round_num (int): Round number (required if save_figs is True).
+      fig_quality (int): DPI for saving the figure.
+
+    Returns:
+      If spec is True, returns (largest_amp_curve_mean, I_fit, Q_fit). Otherwise, returns None.
+    """
+    freqs = np.array(freqs)
+
+    if spec:
+        if qubit_index is None:
+            raise ValueError("When spec=True, qubit_index must be provided.")
+        if largest_amp_curve_mean is None:
+            raise ValueError("When spec=True, largest_amp_curve_mean must be provided.")
+        if I_fit is None:
+            raise ValueError("When spec=True, I_fit must be provided.")
+
+    else:
+        # No fitting is done if spec is False. replace later with rabi params or something
+        I_fit = Q_fit = largest_amp_curve_mean = largest_amp_curve_fwhm = None
+
+    # Create the subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    plt.rcParams.update({'font.size': 18})
+
+    # Plot the I data
+    ax1.plot(freqs, I, label='I', linewidth=2)
+    ax1.set_ylabel("I Amplitude (a.u.)", fontsize=20)
+    ax1.tick_params(axis='both', which='major', labelsize=16)
+    ax1.legend()
+
+    # Plot the Q data
+    ax2.plot(freqs, Q, label='Q', linewidth=2)
+    ax2.set_xlabel("Frequency (MHz)", fontsize=20)
+    ax2.set_ylabel("Q Amplitude (a.u.)", fontsize=20)
+    ax2.tick_params(axis='both', which='major', labelsize=16)
+    ax2.legend()
+
+    if spec:
+        # Plot the fitted curves and mark the center frequency
+        ax1.plot(freqs, I_fit, 'r--', label='Lorentzian Fit')
+        ax1.axvline(largest_amp_curve_mean, color='orange', linestyle='--', linewidth=2)
+        ax2.plot(freqs, Q_fit, 'r--', label='Lorentzian Fit')
+        ax2.axvline(largest_amp_curve_mean, color='orange', linestyle='--', linewidth=2)
+
+    # Determine the final title text
+    if spec:
+        spec_details = f" Qubit Q{qubit_index + 1}, {largest_amp_curve_mean:.5f} MHz, FWHM: {round(largest_amp_curve_fwhm, 1)}"
+        if config is not None:
+            spec_details += f", {config['qubit_spec_ge']['reps']}*{config['qubit_spec_ge']['rounds']} avgs"
+        final_title = title_start + spec_details
+    else:
+        final_title = title_start
+
+    # Center the title above the plot area
+    plot_middle = (ax1.get_position().x0 + ax1.get_position().x1) / 2
+    fig.text(plot_middle, 0.98, final_title, fontsize=24, ha='center', va='top')
+
+    # Adjust layout and margins
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.93)
+
+    # Save the figure if requested
+
+    if outer_folder is None:
+        raise ValueError("outer_folder must be provided to save the figure")
+    outerFolder_expt = os.path.join(outer_folder, expt_name)
+    os.makedirs(outerFolder_expt, exist_ok=True)
+    h5_filename = h5_filename.split('/')[-1].split('.')[0]
+    file_name = os.path.join(outerFolder_expt,
+                             f"{h5_filename}_plot.png")
+    fig.savefig(file_name, dpi=fig_quality, bbox_inches='tight')
+
+    plt.close(fig)
+
+    if spec:
+        return largest_amp_curve_mean, I_fit, Q_fit
+    else:
+        return None
+
 def plot_spectroscopy(
         qubit_index,
         fpts,
@@ -598,7 +698,7 @@ def plot_error_vs_value(data_dict, error_dict, save_name='', save_folder_path=''
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
-def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="T1",
+def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="",
                                                    save_folder_path='', final_figure_quality=100):
     """
     Plot the overlapping Allan deviation for each qubit, excluding large gaps in the data.
@@ -690,12 +790,12 @@ def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_q
         ax.tick_params(axis='both', which='major', labelsize=8)
 
     plt.tight_layout()
-    plt.savefig(os.path.join(save_folder_path, f'{label}_allan_deviation_continuous.png'),
+    plt.savefig(os.path.join(save_folder_path, f'{save_label}_allan_deviation_continuous.png'),
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
 
-def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="T1",
+def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="",
                                                             save_folder_path='', final_figure_quality=100):
     """
     Plot the spectral density of fluctuations using Welch's method for each qubit,
@@ -773,11 +873,11 @@ def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, numb
         ax.tick_params(axis='both', which='major', labelsize=8)
 
     plt.tight_layout()
-    plt.savefig(os.path.join(save_folder_path, f'{label}_welch_spectral_density_continuous_sample.png'),
+    plt.savefig(os.path.join(save_folder_path, f'{save_label}_welch_spectral_density_continuous_sample.png'),
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
-def plot_allan_deviation(date_times, vals, number_of_qubits, show_legends=False, label="T1",
+def plot_allan_deviation(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="",
                          save_folder_path='', final_figure_quality=100):
     """
     Plot the overlapping Allan deviation for each qubit.
@@ -877,12 +977,12 @@ def plot_allan_deviation(date_times, vals, number_of_qubits, show_legends=False,
         ax.tick_params(axis='both', which='major', labelsize=8)
 
     plt.tight_layout()
-    plt.savefig(os.path.join(save_folder_path, f'{label}_allan_deviation.png'),
+    plt.savefig(os.path.join(save_folder_path, f'{save_label}_allan_deviation.png'),
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
 
-def plot_welch_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="T1",
+def plot_welch_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="",
                                 save_folder_path='', final_figure_quality=100):
     """
     Plot the spectral density of fluctuations using Welch's method for each qubit.
@@ -966,11 +1066,11 @@ def plot_welch_spectral_density(date_times, vals, number_of_qubits, show_legends
         ax.tick_params(axis='both', which='major', labelsize=8)
 
     plt.tight_layout()
-    plt.savefig(os.path.join(save_folder_path, f'{label}_welch_spectral_density.png'),
+    plt.savefig(os.path.join(save_folder_path, f'{save_label}_welch_spectral_density.png'),
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
-def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="T1",
+def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="",
                                        save_folder_path='', final_figure_quality=100, log_freqs=False):
     """
     Plot the spectral density of fluctuations using the Lomb–Scargle periodogram for each qubit.
@@ -1088,6 +1188,6 @@ def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_
 
     plt.tight_layout()
     # Save the figure to the specified folder.
-    plt.savefig(os.path.join(save_folder_path, f'{label}_lomb_scargle_spectral_density.png'),
+    plt.savefig(os.path.join(save_folder_path, f'{save_label}_lomb_scargle_spectral_density.png'),
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)

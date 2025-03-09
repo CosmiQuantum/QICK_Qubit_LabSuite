@@ -456,30 +456,12 @@ process_map = {
 # ------------------ Main Data Loader ------------------
 
 def load_and_process_all_data(h5_filepath, save_r=1):
-    """
-    Load and process all data from an HDF5 file.
-
-    For each qubit group (e.g. "Q1", "Q2", …), the function:
-      - Loads every dataset.
-      - Decodes byte arrays properly using ensure_str.
-      - Applies key-specific processing using process_map.
-      - Replicates each processed value save_r times.
-
-    Parameters:
-        h5_filepath (str): Path to the HDF5 file.
-        save_r (int, optional): Number of times to replicate each processed dataset for compatibility. 
-                                Defaults to 1.
-
-    Returns:
-        dict: Nested dictionary with structure:
-              { qubit_index: { dataset_key: [processed_dataset]*save_r, ... }, ... }
-    """
     loaded_data = {}
 
     with h5py.File(h5_filepath, 'r') as f:
         for qubit_group in f.keys():
             try:
-                # Expect group names like "Q1", "Q2", etc. Convert to zero-based index.
+                # Convert group names like "Q1" to a zero-based index.
                 qubit_index = int(qubit_group[1:]) - 1
             except ValueError:
                 print(f"Warning: Could not parse qubit index from group name '{qubit_group}'. Skipping.")
@@ -489,28 +471,28 @@ def load_and_process_all_data(h5_filepath, save_r=1):
             group = f[qubit_group]
             for dataset_name in group.keys():
                 try:
-                    # Load the raw dataset value.
                     raw_value = group[dataset_name][()]
                 except Exception as e:
                     print(f"Warning: Could not load dataset '{dataset_name}' in group '{qubit_group}'. Error: {e}")
                     continue
 
-                # Decode byte arrays and strings properly.
+                # Decode and process the dataset value.
                 decoded_value = ensure_str(raw_value)
                 if dataset_name in process_map:
                     try:
-                        # Process the value based on its dataset key.
                         processed_value = process_map[dataset_name](decoded_value)
                     except Exception as e:
-                        print(
-                            f"Warning: Processing dataset '{dataset_name}' in group '{qubit_group}' failed with error: {e}")
+                        print(f"Warning: Processing dataset '{dataset_name}' in group '{qubit_group}' failed with error: {e}")
                         processed_value = decoded_value
                 else:
                     processed_value = decoded_value
 
-                # Replicate the processed value save_r times.
-                replicated = [processed_value] * save_r
-                qubit_data[dataset_name] = unwrap_singleton_list(replicated)
+                # For config keys, store the processed value directly.
+                if dataset_name in ['Exp Config', 'Syst Config']:
+                    qubit_data[dataset_name] = processed_value
+                else:
+                    replicated = [processed_value] * save_r
+                    qubit_data[dataset_name] = unwrap_singleton_list(replicated)
 
             loaded_data[qubit_index] = qubit_data
 
@@ -558,29 +540,84 @@ def get_h5_files_in_dirs(folder_paths):
         h5_files.extend(glob.glob(os.path.join(folder_path, "*.h5")))
     return h5_files
 
-def get_freqs_and_dates(number_of_qubits, filepaths):
+
+def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
+                        plot_title_prefix="", save_figs=False, outer_folder=None,
+                        expt_name=None, round_num=None, fig_quality=100):
+    """
+    Processes data files to extract spectroscopy frequencies, fitting errors, and dates.
+
+    Optionally, if `plot` is True, plots the I/Q data as they are loaded by calling
+    plot_spec_results_individually.
+
+    Parameters:
+      number_of_qubits (int): Number of qubits to process.
+      filepaths (list): List of file paths to load data from.
+      verbose (bool): Verbosity flag for fitting.
+      plot (bool): If True, plot the data as it is loaded.
+      fit_func (callable): Function to perform the Lorentzian fit; if provided, spectroscopic fits
+                           will be plotted.
+      plot_title_prefix (str): Optional prefix to add to the plot title.
+      config (dict): Optional configuration dictionary containing keys such as 'reps' and 'rounds'.
+      save_figs (bool): If True, the plots will be saved.
+      outer_folder (str): Folder path to save the figures (required if save_figs is True).
+      expt_name (str): Experiment name (required if save_figs is True).
+      round_num (int): Round number (required if save_figs is True).
+      h5_filename (str): H5 file name (required if save_figs is True).
+      fig_quality (int): DPI quality for saving the figure.
+
+    Returns:
+      frequencies (dict): Dictionary mapping each qubit index to a list of measured center frequencies.
+      fit_errs (dict): Dictionary mapping each qubit index to a list of fit errors.
+      date_times (dict): Dictionary mapping each qubit index to a list of date/time stamps.
+    """
+    if save_figs:
+        create_folder_if_not_exists(outer_folder)
+
     frequencies = {i: [] for i in range(number_of_qubits)}
     fit_errs = {i: [] for i in range(number_of_qubits)}
     date_times = {i: [] for i in range(number_of_qubits)}
+
     for path_name in filepaths:
         for q_key in range(number_of_qubits):
+            # Load and process the data for this file and qubit
             data = load_and_process_all_data(path_name, save_r=1)
             I = get_data_for_key(data, key='I', qubit_index=q_key)
             Q = get_data_for_key(data, key='Q', qubit_index=q_key)
             freqs = get_data_for_key(data, key='Frequencies', qubit_index=q_key)
             date = get_data_for_key(data, key='Dates', qubit_index=q_key)
+            config = get_data_for_key(data, key='Exp Config', qubit_index=q_key)
 
+            # Check that data are valid numerical arrays (assuming the first element is float)
             if isinstance(I[0], float) and isinstance(Q[0], float) and freqs is not None:
-                largest_amp_curve_mean, I_fit, Q_fit, fit_err = get_lorentzian_fits(I, Q, freqs, verbose=True)
+                # Perform the Lorentzian fit and gather results.
+                I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err = get_lorentzian_fits(I, Q, freqs, verbose=verbose)
 
-                frequencies[q_key].extend([largest_amp_curve_mean])
-                fit_errs[q_key].extend([fit_err])
-                if isinstance(date, list):
-                    date_times[q_key].extend(date)
-                else:
-                    date_times[q_key].append(date)
+                if I_fit is not None:
+                    frequencies[q_key].append(largest_amp_curve_mean)
+                    fit_errs[q_key].append(fit_err)
+                    if isinstance(date, list):
+                        date_times[q_key].extend(date)
+                    else:
+                        date_times[q_key].append(date)
+                    # If plotting is enabled, call the plotting routine.
+                    if save_figs:
+                        # Create a title using an optional prefix, file basename, and qubit index.
 
+                        plot_spec_results_individually(I, Q, freqs,
+                                                       largest_amp_curve_mean=largest_amp_curve_mean,
+                                                       largest_amp_curve_fwhm= largest_amp_curve_fwhm,
+                                                       I_fit=I_fit,
+                                                       Q_fit=Q_fit, title_start=plot_title_prefix,
+                                                       spec=True,
+                                                       qubit_index=q_key, config=config,
+                                                       outer_folder=outer_folder, expt_name=expt_name,
+                                                       round_num=round_num, h5_filename=path_name,
+                                                       fig_quality=fig_quality)
+
+                # Clean up variables for this iteration.
                 del I, Q, freqs, date, data, largest_amp_curve_mean, I_fit, Q_fit, fit_err
+
     return frequencies, fit_errs, date_times
 
 def get_decoherence_time_and_dates(number_of_qubits, filepaths, decoherence_type='T1', discard_values_over=None):

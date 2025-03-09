@@ -265,14 +265,14 @@ def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
         else:
             if verbose:
                 print('Invalid signal passed, please choose "I", "Q", or "None".')
-            return None, None, None, None, None, None, None
+            return None, None, None, None, None
 
-        return mean_I, mean_Q, I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
+        return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
 
     except Exception as e:
         if verbose:
             print("Error during Lorentzian fit:", e)
-        return None, None, None, None, None, None, None
+        return None, None, None, None, None
 
 
 def get_lorentzian_fits(I, Q, freqs, verbose=False):
@@ -298,8 +298,8 @@ def get_lorentzian_fits(I, Q, freqs, verbose=False):
     freqs = np.array(freqs)
     metric_freq = freqs[np.argmax(I)]
 
-    mean_I, mean_Q, I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err = fit_lorenzian(
+    I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err = fit_lorenzian(
         I, Q, freqs, metric_freq, verbose=verbose
     )
 
-    return largest_amp_curve_mean, I_fit, Q_fit, fit_err
+    return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err

@@ -114,14 +114,14 @@ def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
     )
 
     # Generate the fitted exponential curve
-    q1_fit_exponential = exponential(delay_times, *q1_popt)
+    fit_exponential = exponential(delay_times, *q1_popt)
 
     # Extract T1 (decay constant) and its error
     T1_est = q1_popt[2]
     T1_err = np.sqrt(q1_pcov[2][2]) if q1_pcov[2][2] >= 0 else float('inf')
 
     if return_everything:
-        return q1_fit_exponential, T1_err, T1_est, plot_sig
+        return fit_exponential, T1_err, T1_est, plot_sig
     else:
         return T1_est, T1_err
 
@@ -303,3 +303,14 @@ def get_lorentzian_fits(I, Q, freqs, verbose=False):
     )
 
     return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
+
+def allan_deviation_model(tau, h0, h_m1, h_m2, A, tau0):
+    # White noise term: ∝ τ^(-1/2)
+    term_white = np.sqrt(h0 / 2) * tau**(-0.5)
+    # Flicker noise (1/ƒ noise) term: constant with τ
+    term_flicker = np.sqrt(2 * np.log(2) * h_m1)
+    # Random walk noise term: ∝ τ^(1/2)
+    term_randomwalk = np.sqrt((4 * np.pi**2 / 6) * h_m2) * tau**0.5
+    # Lorentzian noise term (exponentially correlated noise)
+    term_lorentz = np.sqrt(A * tau0 / tau * (4 * np.exp(-tau/tau0) - np.exp(-2*tau/tau0) - 3 + 2*tau/tau0))
+    return term_white + term_flicker + term_randomwalk + term_lorentz

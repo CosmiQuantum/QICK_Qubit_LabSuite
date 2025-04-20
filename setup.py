@@ -13,7 +13,6 @@ setup(
         "scipy",
         "datetime",
         "h5py",
-        "allantools",
-        "math"
+        "allantools"
     ],
 )

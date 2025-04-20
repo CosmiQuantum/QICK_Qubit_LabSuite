@@ -12,7 +12,6 @@ setup(
         "tqdm",
         "scipy",
         "datetime",
-        "os",
         "re",
         "h5py",
         "allantools",

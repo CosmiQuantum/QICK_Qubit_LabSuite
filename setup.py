@@ -11,7 +11,6 @@ setup(
         "numpy",
         "tqdm",
         "scipy",
-        "ast",
         "datetime",
         "glob",
         "os",

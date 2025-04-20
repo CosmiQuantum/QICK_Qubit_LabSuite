@@ -12,7 +12,6 @@ setup(
         "tqdm",
         "scipy",
         "datetime",
-        "glob",
         "os",
         "re",
         "h5py",

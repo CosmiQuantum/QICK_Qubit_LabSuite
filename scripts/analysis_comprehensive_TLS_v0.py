@@ -1,4 +1,7 @@
 
+import sys
+sys.path.append('../src/qicklab/analysis')
+
 from analysis_helper_TLS_comprehensive import *
 
 ############### set values here ###################

@@ -1,28 +1,32 @@
-import numpy as np
-import os
-import sys
-import datetime
+import os, sys
 import re
-from matplotlib import pyplot as plt
+import datetime
 import h5py
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
 from sklearn.cluster import KMeans
 
-def create_folder_if_not_exists(folder_path):
-    import os
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+from .analysis.data_processing import datetime_to_unix, unix_to_datetime, get_abs_min
+from .utils.file_helpers import create_folder_if_not_exists
 
-def datetime_to_unix(dt):
-    # Convert to Unix timestamp
-    unix_timestamp = int(dt.timestamp())
-    return unix_timestamp
+# def create_folder_if_not_exists(folder_path):
+#     import os
+#     if not os.path.exists(folder_path):
+#         os.makedirs(folder_path)
 
-def unix_to_datetime(unix_timestamp):
-    # Convert the Unix timestamp to a datetime object
-    dt = datetime.fromtimestamp(unix_timestamp)
-    return dt
+# def datetime_to_unix(dt):
+#     # Convert to Unix timestamp
+#     unix_timestamp = int(dt.timestamp())
+#     return unix_timestamp
+
+# def unix_to_datetime(unix_timestamp):
+#     # Convert the Unix timestamp to a datetime object
+#     dt = datetime.fromtimestamp(unix_timestamp)
+#     return dt
 
 def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
 
@@ -123,12 +127,12 @@ def process_h5_data(data):
     numbers = [float(x) for x in cleaned_data.split() if x]
     return numbers
 
-def get_abs_min(start_time, dates):
-#returns absolute time in minutes
-    abs_min = []
-    for date in dates:
-        abs_min.append(np.array((date - start_time).total_seconds()) / 60)
-    return abs_min
+# def get_abs_min(start_time, dates):
+#     #returns absolute time in minutes
+#     abs_min = []
+#     for date in dates:
+#         abs_min.append(np.array((date - start_time).total_seconds()) / 60)
+#     return abs_min
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):

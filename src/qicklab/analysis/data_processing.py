@@ -1,5 +1,22 @@
 import numpy as np
 
+def datetime_to_unix(dt):
+    ''' Convert python datetime to Unix timestamp '''
+    unix_timestamp = int(dt.timestamp())
+    return unix_timestamp
+
+def unix_to_datetime(unix_timestamp):
+    ''' Convert the Unix timestamp to a datetime object '''
+    dt = datetime.fromtimestamp(unix_timestamp)
+    return dt
+
+def get_abs_min(start_time, dates):
+    ''' returns absolute time in minutes '''
+    abs_min = []
+    for date in dates:
+        abs_min.append(np.array((date - start_time).total_seconds()) / 60)
+    return abs_min
+
 def convert_datetimes_to_seconds(dt_objs):
     """
     Convert a sorted list of datetime objects to seconds relative to the first timestamp.

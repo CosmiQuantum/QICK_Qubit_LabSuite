@@ -39,11 +39,13 @@ from scipy.stats import norm
 from scipy.signal import welch, lombscargle
 from scipy.optimize import curve_fit
 
+from ..utils.ana_utils import convert_datetimes_to_seconds, split_into_continuous_segments, get_longest_continuous_segment, sort_date_time_data
+from ..utils.data_utils import remove_none_values
 from ..utils.file_utils import create_folder_if_not_exists
 from  .fit_functions import allan_deviation_model
 
-def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, round_num=0,
-                       expt_name="ss_repeat_meas", plot=True, fig_quality=100, fig_filename=None):
+
+def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, round_num=0, expt_name="ss_repeat_meas", plot=True, fig_quality=100, fig_filename=None):
     """
     Plot single-shot fidelity (SSF) histogram from IQ data.
 
@@ -184,6 +186,7 @@ def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, rou
 
     return fid, threshold, theta, ig_new, ie_new
 
+
 def compute_ssf_metrics(ig, qg, ie, qe, cfg):
     """
     Compute single-shot fidelity (SSF) metrics from IQ data without plotting.
@@ -252,11 +255,7 @@ def compute_ssf_metrics(ig, qg, ie, qe, cfg):
     return fid, threshold, theta
 
 
-def plot_spec_results_individually(I, Q, freqs, title_start='', spec=False, largest_amp_curve_mean=None,
-                                   largest_amp_curve_fwhm=None,
-                                   I_fit=None, Q_fit=None,
-                                   qubit_index=None, config=None, outer_folder=None,
-                                   expt_name=None, round_num=None, h5_filename = None, fig_quality=100):
+def plot_spec_results_individually(I, Q, freqs, title_start='', spec=False, largest_amp_curve_mean=None, largest_amp_curve_fwhm=None, I_fit=None, Q_fit=None, qubit_index=None, config=None, outer_folder=None, expt_name=None, round_num=None, h5_filename = None, fig_quality=100):
     """
     Plots I and Q data with optional Lorentzian fitting for qubit spectroscopy.
 
@@ -358,10 +357,7 @@ def plot_spec_results_individually(I, Q, freqs, title_start='', spec=False, larg
         return None
 
 
-def plot_t1_results_individually(I, Q, delay_times, title_start='', t1_fit_curve=None,
-                                 T1_est=None, T1_err=None, plot_sig=None, qubit_index=None,
-                                 outer_folder=None, expt_name=None, round_num=None,
-                                 h5_filename=None, fig_quality=100, thresholding = False):
+def plot_t1_results_individually(I, Q, delay_times, title_start='', t1_fit_curve=None, T1_est=None, T1_err=None, plot_sig=None, qubit_index=None, outer_folder=None, expt_name=None, round_num=None, h5_filename=None, fig_quality=100, thresholding = False):
     """
     Plots I and Q data versus delay time and overlays the T1 exponential fit on the
     appropriate subplot.
@@ -428,10 +424,7 @@ def plot_t1_results_individually(I, Q, delay_times, title_start='', t1_fit_curve
     plt.close(fig)
 
 
-def plot_spectroscopy(qubit_index, fpts, fcenter, amps, round_num=0, config=None, outerFolder=None,
-                      expt_name="res_spec", experiment=None, save_figs=False, reloaded_config=None, fig_quality=100,
-                      title_word="Res", xlabel="Freq (MHz)", ylabel="Amplitude (a.u.)", find_min=True,
-                      plot_min_line=True, include_min_in_title=True, return_min=True, fig_filename=None):
+def plot_spectroscopy(qubit_index, fpts, fcenter, amps, round_num=0, config=None, outerFolder=None, expt_name="res_spec", experiment=None, save_figs=False, reloaded_config=None, fig_quality=100, title_word="Res", xlabel="Freq (MHz)", ylabel="Amplitude (a.u.)", find_min=True, plot_min_line=True, include_min_in_title=True, return_min=True, fig_filename=None):
     """
     Plot spectroscopy data and optionally return the extracted resonance (minimum) frequencies.
 
@@ -595,56 +588,7 @@ def plot_spectroscopy(qubit_index, fpts, fcenter, amps, round_num=0, config=None
         return None
 
 
-def remove_none_values(y_vals, x_vals, additional=None):
-    """
-    Remove None values from a list along with their corresponding x-values and dates.
-
-    Parameters
-    ----------
-    y_vals : list
-        List of y-values which may include None entries.
-    x_vals : list
-        List of x-values corresponding to y_vals.
-    dates : list
-        List of date values corresponding to y_vals.
-
-    Returns
-    -------
-    tuple of lists
-        Three lists corresponding to y_vals, x_vals, and dates with the None values removed.
-
-    Raises
-    ------
-    ValueError
-        If the input lists do not have the same length.
-    """
-    if additional is not None:
-        if not (len(y_vals) == len(x_vals) == len(additional)):
-            raise ValueError("All lists must have the same length")
-
-        # Filter out None values and their corresponding elements.
-        filtered_data = [(x, y, z) for x, y, z in zip(y_vals, x_vals, additional) if x is not None]
-
-        # Unzip to separate the lists.
-        filtered_list1, filtered_list2, filtered_list3 = zip(*filtered_data) if filtered_data else ([], [], [])
-
-        return list(filtered_list1), list(filtered_list2), list(filtered_list3)
-    else:
-        if not (len(y_vals) == len(x_vals)):
-            raise ValueError("All lists must have the same length")
-
-            # Filter out None values and their corresponding elements.
-        filtered_data = [(x, y) for x, y in zip(y_vals, x_vals) if x is not None]
-
-        # Unzip to separate the lists.
-        filtered_list1, filtered_list2 = zip(*filtered_data) if filtered_data else ([], [])
-
-        return list(filtered_list1), list(filtered_list2)
-
-
-def scatter_plot_vs_time_with_fit_errs(date_times, y_data, number_of_qubits, y_data_name='',
-                                       save_name='', save_folder_path='', y_label='',
-                                       show_legends=False, fit_err=None, final_figure_quality=100):
+def scatter_plot_vs_time_with_fit_errs(date_times, y_data, number_of_qubits, y_data_name='', save_name='', save_folder_path='', y_label='', show_legends=False, fit_err=None, final_figure_quality=100):
     """
     Create scatter plots versus time for multiple qubits, including error bars.
 
@@ -780,9 +724,7 @@ def scatter_plot_vs_time_with_fit_errs(date_times, y_data, number_of_qubits, y_d
     plt.close()
 
 
-def plot_histogram_with_gaussian(data_dict, date_dict, save_name='', save_folder_path='', data_type='',
-                                 x_label='', y_label='', title=None,
-                                 show_legends=False, final_figure_quality=300, n_cols=3, bin_count=50):
+def plot_histogram_with_gaussian(data_dict, date_dict, save_name='', save_folder_path='', data_type='', x_label='', y_label='', title=None, show_legends=False, final_figure_quality=300, n_cols=3, bin_count=50):
     """
     Plot a histogram for each dataset with an overlaid Gaussian fit.
 
@@ -873,9 +815,7 @@ def plot_histogram_with_gaussian(data_dict, date_dict, save_name='', save_folder
     return gaussian_fit_data, mean_values, std_values
 
 
-def plot_cumulative_distribution(data_dict, gaussian_fit_data, save_name='', save_folder_path='', data_type='',
-                                 x_label='', y_label='',
-                                 final_figure_quality=300):
+def plot_cumulative_distribution(data_dict, gaussian_fit_data, save_name='', save_folder_path='', data_type='', x_label='', y_label='', final_figure_quality=300):
     """
     Plot cumulative distributions for each dataset by overlaying the empirical CDF and the cumulative Gaussian fit.
 
@@ -940,8 +880,7 @@ def plot_cumulative_distribution(data_dict, gaussian_fit_data, save_name='', sav
     plt.close(fig)
 
 
-def plot_error_vs_value(data_dict, error_dict, save_name='', save_folder_path='', data_type='',
-                        x_label='', y_label='', show_legends=False, final_figure_quality=300, n_cols=3):
+def plot_error_vs_value(data_dict, error_dict, save_name='', save_folder_path='', data_type='', x_label='', y_label='', show_legends=False, final_figure_quality=300, n_cols=3):
     """
     Create scatter plots of error versus value for each dataset.
 
@@ -1018,10 +957,7 @@ def plot_error_vs_value(data_dict, error_dict, save_name='', save_folder_path=''
     plt.close(fig)
 
 
-def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="",
-                                                   save_label="", save_folder_path='', final_figure_quality=100,
-                                                   plot_all_data_segments=False, stack_segments_yaxis=False,
-                                                   stack_segments_xaxis=False, resample=False, fit=False):
+def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="", save_folder_path='', final_figure_quality=100, plot_all_data_segments=False, stack_segments_yaxis=False, stack_segments_xaxis=False, resample=False, fit=False):
     """
     Plot the overlapping Allan deviation for each qubit, excluding large gaps in the data.
     In addition, also plot and save the segmented raw data versus time on the x-axis,
@@ -1398,10 +1334,7 @@ def plot_allan_deviation_largest_continuous_sample(date_times, vals, number_of_q
     plt.close(fig2)
 
 
-def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="",
-                                                          save_label="", save_folder_path='', final_figure_quality=100,
-                                                          plot_all_data_segments=False, stack_segments_yaxis=False,
-                                                          stack_segments_xaxis=False, resample=False):
+def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="", save_folder_path='', final_figure_quality=100, plot_all_data_segments=False, stack_segments_yaxis=False, stack_segments_xaxis=False, resample=False):
     """
     Plot the spectral density of fluctuations using Welch's method for each qubit,
     using only the largest continuous segment of data resampled onto a uniform grid
@@ -1629,8 +1562,8 @@ def plot_welch_spectral_density_largest_continuous_sample(date_times, vals, numb
                 transparent=False, dpi=final_figure_quality)
     plt.close(fig)
 
-def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="",
-                                       save_folder_path='', final_figure_quality=100, log_freqs=False):
+
+def plot_lomb_scargle_spectral_density(date_times, vals, number_of_qubits, show_legends=False, label="", save_label="", save_folder_path='', final_figure_quality=100, log_freqs=False):
     """
     Plot the spectral density of fluctuations using the Lomb–Scargle periodogram for each qubit.
 

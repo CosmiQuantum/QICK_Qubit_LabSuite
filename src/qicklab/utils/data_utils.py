@@ -161,6 +161,51 @@ def unwrap_singleton_list(val):
 def create_data_dict(keys, save_r, qs):
     return {Q: {key: np.empty(save_r, dtype=object) for key in keys} for Q in range(len(qs))}
 
+def remove_none_values(y_vals, x_vals, additional=None):
+    """
+    Remove None values from a list along with their corresponding x-values and dates.
+
+    Parameters
+    ----------
+    y_vals : list
+        List of y-values which may include None entries.
+    x_vals : list
+        List of x-values corresponding to y_vals.
+    dates : list
+        List of date values corresponding to y_vals.
+
+    Returns
+    -------
+    tuple of lists
+        Three lists corresponding to y_vals, x_vals, and dates with the None values removed.
+
+    Raises
+    ------
+    ValueError
+        If the input lists do not have the same length.
+    """
+    if additional is not None:
+        if not (len(y_vals) == len(x_vals) == len(additional)):
+            raise ValueError("All lists must have the same length")
+
+        # Filter out None values and their corresponding elements.
+        filtered_data = [(x, y, z) for x, y, z in zip(y_vals, x_vals, additional) if x is not None]
+
+        # Unzip to separate the lists.
+        filtered_list1, filtered_list2, filtered_list3 = zip(*filtered_data) if filtered_data else ([], [], [])
+
+        return list(filtered_list1), list(filtered_list2), list(filtered_list3)
+    else:
+        if not (len(y_vals) == len(x_vals)):
+            raise ValueError("All lists must have the same length")
+
+            # Filter out None values and their corresponding elements.
+        filtered_data = [(x, y) for x, y in zip(y_vals, x_vals) if x is not None]
+
+        # Unzip to separate the lists.
+        filtered_list1, filtered_list2 = zip(*filtered_data) if filtered_data else ([], [])
+
+        return list(filtered_list1), list(filtered_list2)
 # ------------------ Helper Functions for Data Processing ------------------
 
 

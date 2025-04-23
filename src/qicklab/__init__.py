@@ -12,7 +12,7 @@ from .experiments.measurements import *
 
 from .hardware.build_state import *
 # from .hardware.build_task import *
-from .hardware.qick_programs import *
+# from .hardware.qick_programs import *
 
 from .utils.file_helpers import *
 

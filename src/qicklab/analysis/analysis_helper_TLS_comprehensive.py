@@ -10,6 +10,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 from sklearn.cluster import KMeans
 
+from .fit_functions import lorentzian, exponential
 from ..utils.data_utils import process_string_of_nested_lists, process_h5_data
 from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import datetime_to_unix, unix_to_datetime, get_abs_min
@@ -67,7 +68,7 @@ def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
                                    'Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
 
                 else:
-                        raise ValueError(f"Unsupported data_type: {data_type}")
+                    raise ValueError(f"Unsupported data_type: {data_type}")
 
                 try:
                     mapped_key = target_keys[dataset_name]  # Map HDF5 key to target key.
@@ -80,39 +81,6 @@ def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
             data[data_type][qubit_index] = qubit_data
 
     return data
-
-# def process_string_of_nested_lists(data):
-#     # Remove extra whitespace and non-numeric characters.
-#     data = re.sub(r'\s*\[(\s*.*?\s*)\]\s*', r'[\1]', data)
-#     data = data.replace('[ ', '[')
-#     data = data.replace('[ ', '[')
-#     data = data.replace('[ ', '[')
-#     cleaned_data = ''.join(c for c in data if c.isdigit() or c in ['-', '.', ' ', 'e', '[', ']'])
-#     pattern = r'\[(.*?)\]'  # Regular expression to match data within brackets
-#     matches = re.findall(pattern, cleaned_data)
-#     result = []
-#     for match in matches:
-#         numbers = [float(x.strip('[').strip(']').replace("'", "").replace(" ", "").replace("  ", "")) for x in
-#                     match.split()]  # Convert strings to integers
-#     result.append(numbers)
-
-#     return result
-
-# def process_h5_data(data):
-#     # Check if the data is a byte string; decode if necessary.
-#     if isinstance(data, bytes):
-#         data_str = data.decode()
-#     elif isinstance(data, str):
-#         data_str = data
-#     else:
-#         raise ValueError("Unsupported data type. Data should be bytes or string.")
-
-#     # Remove extra whitespace and non-numeric characters.
-#     cleaned_data = ''.join(c for c in data_str if c.isdigit() or c in ['-', '.', ' ', 'e'])
-
-#     # Split into individual numbers, removing empty strings.
-#     numbers = [float(x) for x in cleaned_data.split() if x]
-#     return numbers
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):
@@ -128,9 +96,6 @@ class qspec:
         freq_q = freqs[np.argmax(mag)]
         qfreq, qfreq_err, fwhm, qspec_fit = self.fit_lorenzian(mag, freqs, freq_q)
         return qfreq, qfreq_err, fwhm, qspec_fit
-
-    def lorentzian(self,f, f0, gamma, A, B):
-        return A * gamma ** 2 / ((f - f0) ** 2 + gamma ** 2) + B
 
     def max_offset_difference_with_x(self,x_values, y_values, offset):
         max_average_difference = -1
@@ -157,7 +122,7 @@ class qspec:
             initial_guess = [freq_q, 1, np.max(mag), np.min(mag)]
 
             # First round of fits (to get rough estimates)
-            params, _ = curve_fit(self.lorentzian, freqs, mag, p0=initial_guess)
+            params, _ = curve_fit(lorentzian, freqs, mag, p0=initial_guess)
 
 
             # Use these fits to refine guesses
@@ -165,10 +130,10 @@ class qspec:
             initial_guess = [x_max_diff, 1, np.max(mag), np.min(mag)]
 
             # Second (refined) round of fits, this time capturing the covariance matrices
-            params, cov = curve_fit(self.lorentzian, freqs, mag, p0=initial_guess)
+            params, cov = curve_fit(lorentzian, freqs, mag, p0=initial_guess)
 
             # Create the fitted curves
-            fit = self.lorentzian(freqs, *params)
+            fit = lorentzian(freqs, *params)
 
             # Calculate errors from the covariance matrices
             fit_err = np.sqrt(np.diag(cov))[0]
@@ -312,9 +277,6 @@ class t1:
 
         return p_excited
 
-    def exponential(self, x, a, b, c, d):
-        return a * np.exp(-(x - b) / c) + d
-
     def t1_fit(self, signal, delay_times, round, n, plot=False):
 
         # Initial guess for parameters
@@ -331,12 +293,12 @@ class t1:
         upper_bounds = [np.inf, np.inf, np.inf, np.inf]  # No upper bound on parameters
 
         # Perform the fit using the 'trf' method with bounds
-        q1_popt, q1_pcov = curve_fit(self.exponential, delay_times, signal,
+        q1_popt, q1_pcov = curve_fit(exponential, delay_times, signal,
                                      p0=q1_guess, bounds=(lower_bounds, upper_bounds),
                                      method='trf', maxfev=10000)
 
         # Generate the fitted exponential curve
-        q1_fit_exponential = self.exponential(delay_times, *q1_popt)
+        q1_fit_exponential = exponential(delay_times, *q1_popt)
 
         # Extract T1 and its error
         T1_est = q1_popt[2]  # Decay constant T1

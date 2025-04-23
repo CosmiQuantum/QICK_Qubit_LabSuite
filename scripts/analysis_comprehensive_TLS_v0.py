@@ -1,7 +1,7 @@
 
 # import sys
 # sys.path.append('../src/qicklab/analysis')
-
+import numpy as np
 
 # from analysis_helper_TLS_comprehensive import qspec, t1, ssf, resstarkspec, starkspec, auto_threshold
 from qicklab import qspec, t1, ssf, resstarkspec, starkspec, auto_threshold

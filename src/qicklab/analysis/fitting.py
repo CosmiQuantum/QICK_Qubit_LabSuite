@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
 
+from ..utils.ana_utils import max_offset_difference_with_x
 from ..utils.file_utils import create_folder_if_not_exists
 from  .fit_functions import exponential, lorentzian, allan_deviation_model
 
@@ -107,36 +108,6 @@ def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
         return fit_exponential, T1_err, T1_est, plot_sig
     else:
         return T1_est, T1_err
-
-def max_offset_difference_with_x(x_values, y_values, offset):
-    """
-    Find the x-value corresponding to the maximum average absolute difference from a given offset.
-
-    The function calculates the average absolute difference from the offset for triplets of consecutive y-values
-    and returns the x-value (from the middle point of each triplet) that corresponds to the maximum difference.
-
-    Parameters:
-        x_values (array_like): Array of x-values.
-        y_values (array_like): Array of y-values.
-        offset (float): The offset value to compare against.
-
-    Returns:
-        tuple:
-            corresponding_x: The x-value corresponding to the maximum average difference.
-            max_average_difference: The maximum average absolute difference calculated.
-    """
-    max_average_difference = -1
-    corresponding_x = None
-
-    for i in range(len(y_values) - 2):
-        y_triplet = y_values[i:i + 3]
-        average_difference = sum(abs(y - offset) for y in y_triplet) / 3
-
-        if average_difference > max_average_difference:
-            max_average_difference = average_difference
-            corresponding_x = x_values[i + 1]
-
-    return corresponding_x, max_average_difference
 
 def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
     """

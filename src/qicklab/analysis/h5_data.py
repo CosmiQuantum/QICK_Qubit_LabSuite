@@ -20,6 +20,7 @@ import ast
 
 import numpy as np
 
+from ..utils.data_utils import ensure_str, unwrap_singleton_list
 from .plotting import *
 from .fitting import *
 
@@ -31,11 +32,7 @@ def mask_gain_res(QUBIT_INDEX, IndexGain = 1, num_qubits=6):
         filtered_gain_ge[QUBIT_INDEX] = IndexGain  # Set the gain for the selected qubit
     return filtered_gain_ge
 
-def extract_resonator_frequencies(
-        data,  # dict: keys are qubit indices (0 means qubit 1) and values are (x_data, y_data)
-        process_offset=False,
-        offsets=None  # dict: keys matching those in data, with offset frequency values
-):
+def extract_resonator_frequencies(data, process_offset=False, offsets=None):
     """
     Extracts the resonance frequencies for each qubit based on the provided data.
 
@@ -44,11 +41,13 @@ def extract_resonator_frequencies(
     data : dict
         Dictionary where each key is a qubit index (0 means qubit 1) and each value is a tuple or list
         containing the x_data and y_data arrays for that qubit.
+        keys are qubit indices (0 means qubit 1) and values are (x_data, y_data)
     process_offset : bool, optional
         If True, each qubit's x_data is shifted by an offset provided in the offsets dictionary.
     offsets : dict, optional
         Dictionary of offset frequencies to add to each qubit's x_data (keys must match those in data)
         when process_offset is True.
+        keys matching those in data, with offset frequency values
 
     Returns
     -------
@@ -246,9 +245,7 @@ def get_data_for_key(loaded_data, key, qubit_index=None):
                 result[q_index] = data[key]
         return result
 
-def get_res_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
-                        plot_title_prefix="", save_figs=False, outer_folder=None,
-                        expt_name=None, round_num=None, fig_quality=50):
+def get_res_freqs_and_dates(number_of_qubits, filepaths, verbose=False, plot_title_prefix="", save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=50):
     all_q_min_res_freqs = {i: [] for i in range(number_of_qubits)}
     all_q_res_freqs_time = {i: [] for i in range(number_of_qubits)}
 
@@ -291,9 +288,7 @@ def get_res_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
     #return dict with all qubits and a list of the frequencies for the resonator for that qubit and measurement times
     return all_q_min_res_freqs, all_q_res_freqs_time
 
-def get_ss_info_and_dates(number_of_qubits, filepaths, verbose=False,
-                        plot_title_prefix="", save_figs=False, outer_folder=None,
-                        expt_name=None, round_num=None, fig_quality=50):
+def get_ss_info_and_dates(number_of_qubits, filepaths, verbose=False, plot_title_prefix="", save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=50):
     fidelities = {i: [] for i in range(number_of_qubits)}
     thresholds = {i: [] for i in range(number_of_qubits)}
     angles = {i: [] for i in range(number_of_qubits)}
@@ -334,9 +329,7 @@ def get_ss_info_and_dates(number_of_qubits, filepaths, verbose=False,
     #return dict with all qubits and a list of the frequencies for the resonator for that qubit and measurement times
     return fidelities, angles, thresholds, date_times
 
-def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
-                        plot_title_prefix="", save_figs=False, outer_folder=None,
-                        expt_name=None, round_num=None, fig_quality=50, fit_err_threshold=0):
+def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False, plot_title_prefix="", save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=50, fit_err_threshold=0):
     """
     Processes data files to extract spectroscopy frequencies, fitting errors, and dates.
 
@@ -414,12 +407,7 @@ def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
 
     return frequencies, fit_errs, date_times
 
-
-def get_decoherence_time_and_dates(number_of_qubits, filepaths, decoherence_type='T1',
-                                   discard_values_over=None, fit_err_threshold=0,
-                                   save_figs=False, outer_folder=None, expt_name=None,
-                                   round_num=None, fig_quality=100, plot_title_prefix="",
-                                   thresholding=False, discard_low_signal_values = True):
+def get_decoherence_time_and_dates(number_of_qubits, filepaths, decoherence_type='T1', discard_values_over=None, fit_err_threshold=0, save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=100, plot_title_prefix="", thresholding=False, discard_low_signal_values = True):
     """
     Processes data files to extract T1 decay constants (decoherence times), fit errors, and dates.
 

@@ -1,39 +1,32 @@
+'''
+ana_utils.py
+    Collection of general analysis methods that are broadly useful.
+    These methods should have no dependencies to other files in the codebase.
+'''
+
 import numpy as np
 
-def datetime_to_unix(dt):
-    ''' Convert python datetime to Unix timestamp '''
-    unix_timestamp = int(dt.timestamp())
-    return unix_timestamp
-
-def unix_to_datetime(unix_timestamp):
-    ''' Convert the Unix timestamp to a datetime object '''
-    dt = datetime.fromtimestamp(unix_timestamp)
-    return dt
-
-def get_abs_min(start_time, dates):
-    ''' returns absolute time in minutes '''
-    abs_min = []
-    for date in dates:
-        abs_min.append(np.array((date - start_time).total_seconds()) / 60)
-    return abs_min
-
-def convert_datetimes_to_seconds(dt_objs):
+def roll(data: np.ndarray) -> np.ndarray:
     """
-    Convert a sorted list of datetime objects to seconds relative to the first timestamp.
+    Smooth a 1D numpy array using a simple moving average filter with a window size of 5.
 
-    Parameters
-    ----------
-    dt_objs : list
-        Sorted list of datetime objects.
+    The function computes the convolution of the data with a uniform kernel. It then pads the smoothed 
+    data to maintain the original length.
 
-    Returns
-    -------
-    numpy.ndarray
-        Array of time values in seconds relative to the first timestamp.
+    Parameters:
+        data (np.ndarray): 1D array of numerical data.
+
+    Returns:
+        np.ndarray: Smoothed array with the same length as the input.
     """
-    t0 = dt_objs[0]
-    return np.array([(t - t0).total_seconds() for t in dt_objs])
-
+    # Create a simple averaging kernel of size 5.
+    kernel = np.ones(5) / 5
+    # Convolve the input data with the kernel.
+    smoothed = np.convolve(data, kernel, mode='valid')
+    # Calculate the padding size required to match the original length.
+    pad_size = (len(data) - len(smoothed)) // 2
+    # Concatenate the unprocessed beginning and end segments with the smoothed data.
+    return np.concatenate((data[:pad_size], smoothed, data[-pad_size:]))
 
 def split_into_continuous_segments(time_sec, values, gap_threshold_factor=5):
     """
@@ -90,7 +83,6 @@ def sort_date_time_data(date_times, data):
         sorted_times, sorted_vals = [], []
     return sorted_times, sorted_vals
 
-
 def get_longest_continuous_segment(segments_time, segments_vals):
     """
     Returns the longest continuous segment from lists of continuous segments.
@@ -114,3 +106,4 @@ def get_longest_continuous_segment(segments_time, segments_vals):
     lengths = [len(seg) for seg in segments_time]
     max_idx = np.argmax(lengths)
     return segments_time[max_idx], segments_vals[max_idx]
+

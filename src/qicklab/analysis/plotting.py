@@ -22,28 +22,25 @@ Usage Example:
     from qicklab.analysis.plotting import plot_spectroscopy, plot_allan_deviation
     # Prepare your data and then call the desired plotting functions.
 """
+
+import os
+import math
+import datetime
+import allantools
+
+import numpy as np
+import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.dates as mdates
+
+from matplotlib.ticker import StrMethodFormatter
+
 from scipy.stats import norm
 from scipy.signal import welch, lombscargle
 from scipy.optimize import curve_fit
-import os
-import datetime
-import allantools
-import math
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.ticker import StrMethodFormatter
-import matplotlib.dates as mdates
-from ..utils.file_helpers import create_folder_if_not_exists
-from .data_processing import *
-from .fitting import *
 
-import os
-import math
-import datetime
-import numpy as np
-import matplotlib.pyplot as plt
-
+from ..utils.file_utils import create_folder_if_not_exists
+from  .fit_functions import allan_deviation_model
 
 def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, round_num=0,
                        expt_name="ss_repeat_meas", plot=True, fig_quality=100, fig_filename=None):

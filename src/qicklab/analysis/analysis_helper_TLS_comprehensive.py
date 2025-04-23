@@ -10,23 +10,10 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 from sklearn.cluster import KMeans
 
-from .data_processing import datetime_to_unix, unix_to_datetime, get_abs_min
-from ..utils.file_helpers import create_folder_if_not_exists
+from ..utils.data_utils import process_string_of_nested_lists, process_h5_data
+from ..utils.file_utils import create_folder_if_not_exists
+from ..utils.time_utils import datetime_to_unix, unix_to_datetime, get_abs_min
 
-# def create_folder_if_not_exists(folder_path):
-#     import os
-#     if not os.path.exists(folder_path):
-#         os.makedirs(folder_path)
-
-# def datetime_to_unix(dt):
-#     # Convert to Unix timestamp
-#     unix_timestamp = int(dt.timestamp())
-#     return unix_timestamp
-
-# def unix_to_datetime(unix_timestamp):
-#     # Convert the Unix timestamp to a datetime object
-#     dt = datetime.fromtimestamp(unix_timestamp)
-#     return dt
 
 def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
 
@@ -94,45 +81,38 @@ def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
 
     return data
 
-def process_string_of_nested_lists(data):
-    # Remove extra whitespace and non-numeric characters.
-    data = re.sub(r'\s*\[(\s*.*?\s*)\]\s*', r'[\1]', data)
-    data = data.replace('[ ', '[')
-    data = data.replace('[ ', '[')
-    data = data.replace('[ ', '[')
-    cleaned_data = ''.join(c for c in data if c.isdigit() or c in ['-', '.', ' ', 'e', '[', ']'])
-    pattern = r'\[(.*?)\]'  # Regular expression to match data within brackets
-    matches = re.findall(pattern, cleaned_data)
-    result = []
-    for match in matches:
-        numbers = [float(x.strip('[').strip(']').replace("'", "").replace(" ", "").replace("  ", "")) for x in
-                    match.split()]  # Convert strings to integers
-    result.append(numbers)
+# def process_string_of_nested_lists(data):
+#     # Remove extra whitespace and non-numeric characters.
+#     data = re.sub(r'\s*\[(\s*.*?\s*)\]\s*', r'[\1]', data)
+#     data = data.replace('[ ', '[')
+#     data = data.replace('[ ', '[')
+#     data = data.replace('[ ', '[')
+#     cleaned_data = ''.join(c for c in data if c.isdigit() or c in ['-', '.', ' ', 'e', '[', ']'])
+#     pattern = r'\[(.*?)\]'  # Regular expression to match data within brackets
+#     matches = re.findall(pattern, cleaned_data)
+#     result = []
+#     for match in matches:
+#         numbers = [float(x.strip('[').strip(']').replace("'", "").replace(" ", "").replace("  ", "")) for x in
+#                     match.split()]  # Convert strings to integers
+#     result.append(numbers)
 
-    return result
+#     return result
 
-def process_h5_data(data):
-    # Check if the data is a byte string; decode if necessary.
-    if isinstance(data, bytes):
-        data_str = data.decode()
-    elif isinstance(data, str):
-        data_str = data
-    else:
-        raise ValueError("Unsupported data type. Data should be bytes or string.")
+# def process_h5_data(data):
+#     # Check if the data is a byte string; decode if necessary.
+#     if isinstance(data, bytes):
+#         data_str = data.decode()
+#     elif isinstance(data, str):
+#         data_str = data
+#     else:
+#         raise ValueError("Unsupported data type. Data should be bytes or string.")
 
-    # Remove extra whitespace and non-numeric characters.
-    cleaned_data = ''.join(c for c in data_str if c.isdigit() or c in ['-', '.', ' ', 'e'])
+#     # Remove extra whitespace and non-numeric characters.
+#     cleaned_data = ''.join(c for c in data_str if c.isdigit() or c in ['-', '.', ' ', 'e'])
 
-    # Split into individual numbers, removing empty strings.
-    numbers = [float(x) for x in cleaned_data.split() if x]
-    return numbers
-
-# def get_abs_min(start_time, dates):
-#     #returns absolute time in minutes
-#     abs_min = []
-#     for date in dates:
-#         abs_min.append(np.array((date - start_time).total_seconds()) / 60)
-#     return abs_min
+#     # Split into individual numbers, removing empty strings.
+#     numbers = [float(x) for x in cleaned_data.split() if x]
+#     return numbers
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):

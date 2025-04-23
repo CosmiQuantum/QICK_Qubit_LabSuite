@@ -1,28 +1,32 @@
-import numpy as np
-import os
-import sys
-import datetime
+import os, sys
 import re
-from matplotlib import pyplot as plt
+import datetime
 import h5py
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
 from sklearn.cluster import KMeans
 
-def create_folder_if_not_exists(folder_path):
-    import os
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
+from .data_processing import datetime_to_unix, unix_to_datetime, get_abs_min
+from ..utils.file_helpers import create_folder_if_not_exists
 
-def datetime_to_unix(dt):
-    # Convert to Unix timestamp
-    unix_timestamp = int(dt.timestamp())
-    return unix_timestamp
+# def create_folder_if_not_exists(folder_path):
+#     import os
+#     if not os.path.exists(folder_path):
+#         os.makedirs(folder_path)
 
-def unix_to_datetime(unix_timestamp):
-    # Convert the Unix timestamp to a datetime object
-    dt = datetime.fromtimestamp(unix_timestamp)
-    return dt
+# def datetime_to_unix(dt):
+#     # Convert to Unix timestamp
+#     unix_timestamp = int(dt.timestamp())
+#     return unix_timestamp
+
+# def unix_to_datetime(unix_timestamp):
+#     # Convert the Unix timestamp to a datetime object
+#     dt = datetime.fromtimestamp(unix_timestamp)
+#     return dt
 
 def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
 
@@ -123,12 +127,12 @@ def process_h5_data(data):
     numbers = [float(x) for x in cleaned_data.split() if x]
     return numbers
 
-def get_abs_min(start_time, dates):
-#returns absolute time in minutes
-    abs_min = []
-    for date in dates:
-        abs_min.append(np.array((date - start_time).total_seconds()) / 60)
-    return abs_min
+# def get_abs_min(start_time, dates):
+#     #returns absolute time in minutes
+#     abs_min = []
+#     for date in dates:
+#         abs_min.append(np.array((date - start_time).total_seconds()) / 60)
+#     return abs_min
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):
@@ -247,7 +251,7 @@ class qspec:
             ax.set_xlabel('qubit probe frequency [MHz]')
             ax.set_ylabel('I,Q magnitude [a.u.]')
             ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n} low-gain qspec: {np.round(qfreq,2)} +/- {np.round(qfreq_err,2)} MHz, fwhm: {np.round(fwhm,2)} MHz')
-            plt.show()
+            #plt.show(block=False)
 
         return qfreq, qfreq_err, fwhm, qspec_fit
 
@@ -305,7 +309,7 @@ class t1:
         ax.set_xlabel('I [a.u.]')
         ax.set_ylabel('Q [a.u.]')
         ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
-        plt.show()
+        #plt.show(block=False)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -366,7 +370,7 @@ class t1:
             ax.set_ylabel('P(e)')
             ax.legend()
             ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: t1_ge = {T1_est:.3f} +/- {T1_err} us')
-            plt.show()
+            #plt.show(block=False)
 
 
         return q1_fit_exponential, T1_err, T1_est
@@ -504,7 +508,7 @@ class resstarkspec:
         ax.set_xlabel('I [a.u.]')
         ax.set_ylabel('Q [a.u.]')
         ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex +1} round {round + 1} of {n}: rotated I,Q shots for res_stark_spec at gain: {np.round(gains[idx],2)} us')
-        plt.show()
+        #plt.show(block=False)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -545,7 +549,7 @@ class resstarkspec:
             ax[1].plot(self.gain2freq(gains), p_excited_in_round)
             ax[1].set_xlabel('stark shift [MHz]')
             ax[1].set_ylabel('P(e)')
-            plt.show()
+            #plt.show(block=False)
 
         return p_excited_in_round
 
@@ -610,7 +614,7 @@ class starkspec:
         ax.set_xlabel('I [a.u.]')
         ax.set_ylabel('Q [a.u.]')
         ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for stark_spec at gain: {np.round(gains[idx],2)} us')
-        plt.show()
+        #plt.show(block=False)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -661,7 +665,7 @@ class starkspec:
             ax[1].plot(self.gain2freq(gains), p_excited_in_round)
             ax[1].set_xlabel('stark shift [MHz]')
             ax[1].set_ylabel('P(e)')
-            plt.show()
+            #plt.show(block=False)
 
         return p_excited_in_round
 
@@ -724,7 +728,7 @@ class auto_threshold:
             plot.set_title(f'rotated I,Q; theta={np.round(theta,2)}, threshold={np.round(threshold,2)}')
             plot.plot([threshold, threshold], [np.min(q_new), np.max(q_new)], 'k:')
 
-            plt.show()
+            #plt.show(block=False)
 
 
         return theta, threshold, i_new, q_new

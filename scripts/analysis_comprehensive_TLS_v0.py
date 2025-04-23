@@ -1,13 +1,18 @@
 
-import sys
-sys.path.append('../src/qicklab/analysis')
+# import sys
+# sys.path.append('../src/qicklab/analysis')
+import numpy as np
+import matplotlib.pyplot as plt
 
-from analysis_helper_TLS_comprehensive import *
+# from analysis_helper_TLS_comprehensive import qspec, t1, ssf, resstarkspec, starkspec, auto_threshold
+from qicklab import qspec, t1, ssf, resstarkspec, starkspec, auto_threshold, get_abs_min
 
 ############### set values here ###################
-QubitIndex = 0 #zero indexed
-data_dir = "/Users/joycecs/PycharmProjects/PythonProject/.venv/QUIET/QUIET_data/RR_comprehensive_TLS/" #update based on file transfer location from Ryan
+# data_dir = "/Users/joycecs/PycharmProjects/PythonProject/.venv/QUIET/QUIET_data/RR_comprehensive_TLS/" #update based on file transfer location from Ryan
+data_dir = "/exp/cosmiq/data/QUIET/QICK_data/run6/6transmon/TLS_Comprehensive_Study/source_off_substudy1/" #update based on file transfer location from Ryan
 dataset = '2025-04-15_21-24-46'
+
+QubitIndex = 0 #zero indexed
 analysis_flags = {"get_threshold": True, "load_all_data": True, "timestream": True, "round": True}
 selected_round = [10, 73]
 threshold = 0 #overwritten when get_threshold flag is set to True
@@ -114,7 +119,7 @@ if analysis_flags["timestream"]:
     for i in selected_round:
         plot.scatter((stark_dates[i] - start_time).total_seconds()/60, stark_freqs[len(stark_freqs)-1], marker="^",s=150, alpha=1.0)
 
-    plt.show()
+    #plt.show(block=False)
 
 
 if analysis_flags['round']:
@@ -183,7 +188,8 @@ if analysis_flags['round']:
 
 
     fig.suptitle(f'dataset {dataset} qubit {QubitIndex + 1}')
-    plt.show()
+
+plt.show()
 
 
 

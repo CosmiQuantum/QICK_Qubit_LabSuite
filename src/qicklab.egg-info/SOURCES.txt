@@ -4,8 +4,13 @@ src/qicklab/__init__.py
 src/qicklab.egg-info/PKG-INFO
 src/qicklab.egg-info/SOURCES.txt
 src/qicklab.egg-info/dependency_links.txt
+src/qicklab.egg-info/requires.txt
 src/qicklab.egg-info/top_level.txt
 src/qicklab/analysis/__init__.py
+src/qicklab/analysis/analysis_helper_TLS_comprehensive.py
+src/qicklab/analysis/data_processing.py
+src/qicklab/analysis/fitting.py
+src/qicklab/analysis/h5_data.py
 src/qicklab/analysis/plotting.py
 src/qicklab/config/__init__.py
 src/qicklab/config/expt_config.py

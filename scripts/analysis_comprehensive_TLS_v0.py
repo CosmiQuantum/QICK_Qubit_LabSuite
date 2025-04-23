@@ -119,7 +119,7 @@ if analysis_flags["timestream"]:
     for i in selected_round:
         plot.scatter((stark_dates[i] - start_time).total_seconds()/60, stark_freqs[len(stark_freqs)-1], marker="^",s=150, alpha=1.0)
 
-    plt.show(block=False)
+    #plt.show(block=False)
 
 
 if analysis_flags['round']:
@@ -188,7 +188,8 @@ if analysis_flags['round']:
 
 
     fig.suptitle(f'dataset {dataset} qubit {QubitIndex + 1}')
-    plt.show(block=False)
+
+plt.show()
 
 
 

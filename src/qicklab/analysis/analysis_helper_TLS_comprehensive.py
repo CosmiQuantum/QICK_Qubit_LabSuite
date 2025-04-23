@@ -251,7 +251,7 @@ class qspec:
             ax.set_xlabel('qubit probe frequency [MHz]')
             ax.set_ylabel('I,Q magnitude [a.u.]')
             ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n} low-gain qspec: {np.round(qfreq,2)} +/- {np.round(qfreq_err,2)} MHz, fwhm: {np.round(fwhm,2)} MHz')
-            plt.show(block=False)
+            #plt.show(block=False)
 
         return qfreq, qfreq_err, fwhm, qspec_fit
 
@@ -309,7 +309,7 @@ class t1:
         ax.set_xlabel('I [a.u.]')
         ax.set_ylabel('Q [a.u.]')
         ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
-        plt.show(block=False)
+        #plt.show(block=False)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -370,7 +370,7 @@ class t1:
             ax.set_ylabel('P(e)')
             ax.legend()
             ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: t1_ge = {T1_est:.3f} +/- {T1_err} us')
-            plt.show(block=False)
+            #plt.show(block=False)
 
 
         return q1_fit_exponential, T1_err, T1_est
@@ -508,7 +508,7 @@ class resstarkspec:
         ax.set_xlabel('I [a.u.]')
         ax.set_ylabel('Q [a.u.]')
         ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex +1} round {round + 1} of {n}: rotated I,Q shots for res_stark_spec at gain: {np.round(gains[idx],2)} us')
-        plt.show(block=False)
+        #plt.show(block=False)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -549,7 +549,7 @@ class resstarkspec:
             ax[1].plot(self.gain2freq(gains), p_excited_in_round)
             ax[1].set_xlabel('stark shift [MHz]')
             ax[1].set_ylabel('P(e)')
-            plt.show(block=False)
+            #plt.show(block=False)
 
         return p_excited_in_round
 
@@ -614,7 +614,7 @@ class starkspec:
         ax.set_xlabel('I [a.u.]')
         ax.set_ylabel('Q [a.u.]')
         ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for stark_spec at gain: {np.round(gains[idx],2)} us')
-        plt.show(block=False)
+        #plt.show(block=False)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -665,7 +665,7 @@ class starkspec:
             ax[1].plot(self.gain2freq(gains), p_excited_in_round)
             ax[1].set_xlabel('stark shift [MHz]')
             ax[1].set_ylabel('P(e)')
-            plt.show(block=False)
+            #plt.show(block=False)
 
         return p_excited_in_round
 
@@ -728,7 +728,7 @@ class auto_threshold:
             plot.set_title(f'rotated I,Q; theta={np.round(theta,2)}, threshold={np.round(threshold,2)}')
             plot.plot([threshold, threshold], [np.min(q_new), np.max(q_new)], 'k:')
 
-            plt.show(block=False)
+            #plt.show(block=False)
 
 
         return theta, threshold, i_new, q_new

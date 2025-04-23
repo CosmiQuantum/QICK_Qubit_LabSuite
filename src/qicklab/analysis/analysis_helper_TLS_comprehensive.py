@@ -12,75 +12,8 @@ from sklearn.cluster import KMeans
 
 from .fit_functions import lorentzian, exponential
 from ..utils.data_utils import process_string_of_nested_lists, process_h5_data
-from ..utils.file_utils import create_folder_if_not_exists
+from ..utils.file_utils import create_folder_if_not_exists, load_from_h5_with_shotdata
 from ..utils.time_utils import datetime_to_unix, unix_to_datetime, get_abs_min
-
-
-def load_from_h5(filename, data_type, save_r=1):  # Added save_r as parameter.
-
-    data = {data_type: {}}  # Initialize the main dictionary with the data_type.
-
-    with h5py.File(filename, 'r') as f:
-        for qubit_group in f.keys():
-            qubit_index = int(qubit_group[1:]) - 1
-            qubit_data = {}
-            group = f[qubit_group]
-
-            for dataset_name in group.keys():
-                # Attempt to map HDF5 keys to the target dictionaries' keys.
-                if data_type == 'Res':
-                    target_keys = {'Dates': 'Dates', 'freq_pts': 'freq_pts', 'freq_center': 'freq_center',
-                                       'Amps': 'Amps', 'Found Freqs': 'Found Freqs', 'Round Num': 'Round Num',
-                                       'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'QSpec':
-                    target_keys = {'Dates': 'Dates', 'I': 'I', 'Q': 'Q', 'Frequencies': 'Frequencies',
-                                       'I Fit': 'I Fit', 'Q Fit': 'Q Fit', 'Round Num': 'Round Num',
-                                       'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'Ext_QSpec':
-                    target_keys = {'Dates': 'Dates', 'I': 'I', 'Q': 'Q', 'Frequencies': 'Frequencies','Round Num': 'Round Num',
-                                       'Batch Num': 'Batch Num', 'Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-
-                elif data_type == 'Rabi':
-                    target_keys = {'Dates': 'Dates', 'I': 'I', 'Q': 'Q', 'Gains': 'Gains', 'Fit': 'Fit',
-                                       'Round Num': 'Round Num', 'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'SS':
-                    target_keys = {'Fidelity': 'Fidelity', 'Angle': 'Angle', 'Dates': 'Dates', 'I_g': 'I_g',
-                                       'Q_g': 'Q_g', 'I_e': 'I_e', 'Q_e': 'Q_e',
-                                       'Round Num': 'Round Num', 'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'T1':
-                    target_keys = {'T1': 'T1', 'Errors': 'Errors', 'Dates': 'Dates', 'I': 'I', 'Q': 'Q',
-                                       'Delay Times': 'Delay Times', 'Fit': 'Fit', 'Round Num': 'Round Num',
-                                       'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'T2':
-                    target_keys = {'T2': 'T2', 'Errors': 'Errors', 'Dates': 'Dates', 'I': 'I', 'Q': 'Q',
-                                       'Delay Times': 'Delay Times', 'Fit': 'Fit', 'Round Num': 'Round Num',
-                                       'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'T2E':
-                    target_keys = {'T2E': 'T2E', 'Errors': 'Errors', 'Dates': 'Dates', 'I': 'I', 'Q': 'Q',
-                                       'Delay Times': 'Delay Times', 'Fit': 'Fit', 'Round Num': 'Round Num',
-                                       'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type == 'stark2D':
-                    target_keys = {'Dates': 'Dates', 'I':'I', 'Q': 'Q', 'Qu Frequency Sweep':'Qu Frequency Sweep',
-                                   'Res Gain Sweep':'Res Gain Sweep','Round Num':'Round Num', 'Batch Num': 'Batch Num',
-                                   'Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-                elif data_type =='starkSpec':
-                    target_keys = {'Dates': 'Dates', 'I':'I', 'Q': 'Q','P': 'P', 'shots':'shots','Gain Sweep':'Gain Sweep','Round Num':'Round Num', 'Batch Num': 'Batch Num',
-                                   'Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
-
-                else:
-                    raise ValueError(f"Unsupported data_type: {data_type}")
-
-                try:
-                    mapped_key = target_keys[dataset_name]  # Map HDF5 key to target key.
-                    qubit_data[mapped_key] = [group[dataset_name][()]] * save_r  # Expand to match the desired length.
-
-                except KeyError:
-                    print(f"Warning: Key '{dataset_name}' not found in target dictionary for data_type '{data_type}'. Skipping.")
-                    pass
-
-            data[data_type][qubit_index] = qubit_data
-
-    return data
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):
@@ -118,34 +51,35 @@ class qspec:
         return corresponding_x, max_average_difference
 
     def fit_lorenzian(self, mag, freqs, freq_q):
-            # Initial guesses for I and Q
-            initial_guess = [freq_q, 1, np.max(mag), np.min(mag)]
+        ## >TO DO< Replace this (or integrate) with fitting.fit_lorenzian
+        # Initial guesses for I and Q
+        initial_guess = [freq_q, 1, np.max(mag), np.min(mag)]
 
-            # First round of fits (to get rough estimates)
-            params, _ = curve_fit(lorentzian, freqs, mag, p0=initial_guess)
+        # First round of fits (to get rough estimates)
+        params, _ = curve_fit(lorentzian, freqs, mag, p0=initial_guess)
 
 
-            # Use these fits to refine guesses
-            x_max_diff, max_diff = self.max_offset_difference_with_x(freqs, mag, params[3])
-            initial_guess = [x_max_diff, 1, np.max(mag), np.min(mag)]
+        # Use these fits to refine guesses
+        x_max_diff, max_diff = self.max_offset_difference_with_x(freqs, mag, params[3])
+        initial_guess = [x_max_diff, 1, np.max(mag), np.min(mag)]
 
-            # Second (refined) round of fits, this time capturing the covariance matrices
-            params, cov = curve_fit(lorentzian, freqs, mag, p0=initial_guess)
+        # Second (refined) round of fits, this time capturing the covariance matrices
+        params, cov = curve_fit(lorentzian, freqs, mag, p0=initial_guess)
 
-            # Create the fitted curves
-            fit = lorentzian(freqs, *params)
+        # Create the fitted curves
+        fit = lorentzian(freqs, *params)
 
-            # Calculate errors from the covariance matrices
-            fit_err = np.sqrt(np.diag(cov))[0]
+        # Calculate errors from the covariance matrices
+        fit_err = np.sqrt(np.diag(cov))[0]
 
-            # Extract fitted means and FWHM (assuming params[0] is the mean and params[1] relates to the width)
-            mean = params[0]
-            fwhm = 2 * params[1]
+        # Extract fitted means and FWHM (assuming params[0] is the mean and params[1] relates to the width)
+        mean = params[0]
+        fwhm = 2 * params[1]
 
-            # Calculate the amplitude differences from the fitted curves
-            amp_fit = abs(np.max(fit) - np.min(fit))
+        # Calculate the amplitude differences from the fitted curves
+        amp_fit = abs(np.max(fit) - np.min(fit))
 
-            return mean, fit_err, fwhm, fit
+        return mean, fit_err, fwhm, fit
 
     def load_all(self):
         data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
@@ -157,11 +91,11 @@ class qspec:
         I = []
         Q = []
 
-        load_data = load_from_h5(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
+        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
         qspec_probe_freqs = process_h5_data(load_data['QSpec'][self.QubitIndex].get('Frequencies', [])[0][0].decode())
 
         for h5_file in h5_files:
-            load_data = load_from_h5(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
+            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['QSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))
@@ -222,13 +156,13 @@ class t1:
         I_shots = []
         Q_shots = []
 
-        load_data = load_from_h5(os.path.join(data_path, h5_files[0]), 'T1', save_r=1)
+        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'T1', save_r=1)
         delay_times = process_h5_data(load_data['T1'][self.QubitIndex].get('Delay Times', [])[0][0].decode())
         steps = len(delay_times)
         reps = int(len(process_h5_data(load_data['T1'][self.QubitIndex].get('I', [])[0][0].decode()))/steps)
 
         for h5_file in h5_files:
-            load_data = load_from_h5(os.path.join(data_path, h5_file), 'T1', save_r=1)
+            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'T1', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['T1'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_shots.append(np.array(process_h5_data(load_data['T1'][self.QubitIndex].get('I', [])[0][0].decode())).reshape([reps, steps]))
@@ -278,7 +212,7 @@ class t1:
         return p_excited
 
     def t1_fit(self, signal, delay_times, round, n, plot=False):
-
+        ## >TO DO< Replace this (or integrate) with fitting.t1_fit
         # Initial guess for parameters
         q1_a_guess = np.max(signal) - np.min(signal)  # Initial guess for amplitude (a)
         q1_b_guess = 0  # Initial guess for time shift (b)
@@ -359,7 +293,7 @@ class ssf:
         theta = []
 
         for h5_file in h5_files:
-            load_data = load_from_h5(os.path.join(data_path, h5_file), 'SS', save_r=1)
+            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'SS', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['SS'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_g.append(process_h5_data(load_data['SS'][self.QubitIndex].get('I_g', [])[0][0].decode()))
@@ -418,13 +352,13 @@ class resstarkspec:
         Q_shots = []
         P = []
 
-        load_data = load_from_h5(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
+        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
         reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
 
         for h5_file in h5_files:
-            load_data = load_from_h5(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
+            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['starkSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_shots.append(np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape(
@@ -521,13 +455,13 @@ class starkspec:
         Q_shots = []
         P = []
 
-        load_data = load_from_h5(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
+        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
         reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
 
         for h5_file in h5_files:
-            load_data = load_from_h5(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
+            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['starkSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_shots.append(np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape(
@@ -624,7 +558,7 @@ class auto_threshold:
         h5_files = os.listdir(data_path)
         h5_files.sort()
 
-        load_data = load_from_h5(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
+        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
         step_idx = int(steps/2)

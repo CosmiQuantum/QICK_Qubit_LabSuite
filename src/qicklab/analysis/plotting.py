@@ -39,9 +39,10 @@ from scipy.stats import norm
 from scipy.signal import welch, lombscargle
 from scipy.optimize import curve_fit
 
-from ..utils.ana_utils import convert_datetimes_to_seconds, split_into_continuous_segments, get_longest_continuous_segment, sort_date_time_data
+from ..utils.ana_utils import split_into_continuous_segments, get_longest_continuous_segment, sort_date_time_data
 from ..utils.data_utils import remove_none_values
 from ..utils.file_utils import create_folder_if_not_exists
+from ..utils.time_utils import convert_datetimes_to_seconds
 from  .fit_functions import allan_deviation_model
 
 

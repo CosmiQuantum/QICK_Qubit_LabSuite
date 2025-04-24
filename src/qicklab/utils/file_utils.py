@@ -4,6 +4,8 @@ import numpy as np
 
 from .data_utils import convert_non_floats_to_strings, unwrap_singleton_list
 
+##  ================= General Path & File Handling Methods ================= ##
+
 def create_folder_if_not_exists(folder):
     """
     Creates a folder at the given path if it doesn't already exist.
@@ -25,6 +27,8 @@ def get_h5_files_in_dirs(folder_paths):
     for folder_path in folder_paths:
         h5_files.extend(glob.glob(os.path.join(folder_path, "*.h5")))
     return h5_files
+
+##  ================= Interfacing with H5 Files Methods ================= ##
 
 def print_h5_contents(filename):
     """
@@ -65,7 +69,7 @@ def print_h5_contents(filename):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def create_dataset(name, value, group):
+def create_h5_dataset(name, value, group):
     """
     Create a dataset within an HDF5 group based on the given name and value.
 
@@ -143,7 +147,7 @@ def save_to_h5(data, outer_folder_expt, data_type, batch_num, save_r):
             group = f.create_group(f'Q{QubitIndex + 1}')
             # Create datasets within the qubit group.
             for key, value in qubit_data.items():
-                create_dataset(key, value, group)
+                create_h5_dataset(key, value, group)
 
 def load_from_h5(filename, data_type, save_r=1):
     """
@@ -241,3 +245,71 @@ def load_from_h5_with_shotdata(filename, data_type, save_r=1):  # Added save_r a
             data[data_type][qubit_index] = qubit_data
 
     return data
+
+
+def load_h5_data(filename, data_type, save_r=1):
+    """
+    Save data to an HDF5 file with a timestamped filename.
+    Hybrid version of Joyce and Olivias two methods, authored by Dylan
+
+    The function creates the destination folder if it does not exist. It generates a filename
+    containing the current date/time, data type, batch number, and a replication factor. It then
+    iterates over the provided data (organized per qubit) and saves each dataset within its respective
+    group.
+
+    Parameters:
+        data (dict): Nested dictionary where each key corresponds to a qubit index and the value is a 
+                     dictionary of dataset names and data.
+        outer_folder_expt (str): Path to the folder where the HDF5 file should be saved.
+        data_type (str): A descriptor for the type of data (used in filename and attributes).
+        batch_num (int or str): Batch number to include in the filename and file attributes.
+        save_r (int or str): Replication factor for the number of items per batch (included in filename and attributes).
+    """
+
+    data = {data_type: {}}  # Initialize the main output dictionary with the data_type.
+
+    ## Define the target data fields, necessary if by-shot data is saved
+    global_fields = ['Dates', 'Round Num', 'Batch Num', 'Exp Config', 'Syst Config']
+    target_fields = {
+        "Res": ['freq_pts', 'freq_center', 'Amps', 'Found Freqs']+global_fields,
+        "QSpec": ['I', 'Q', 'Frequencies', 'I Fit', 'Q Fit', 'Recycled QFreq']+global_fields,
+        "Ext_QSpec": ['I', 'Q', 'Frequencies']+global_fields,
+        "Rabi": ['I', 'Q', 'Gains', 'Fit']+global_fields,
+        "SS": ['Fidelity', 'Angle', 'I_g', 'Q_g', 'I_e', 'Q_e']+global_fields,
+        "T1": ['T1', 'Errors', 'I', 'Q', 'Delay Times', 'Fit']+global_fields,
+        "T2": ['T2', 'Errors', 'I', 'Q', 'Delay Times', 'Fit']+global_fields,
+        "T2E": ['T2E', 'Errors', 'I', 'Q', 'Delay Times', 'Fit']+global_fields,
+        "stark2D": ['I', 'Q', 'Qu Frequency Sweep', 'Res Gain Sweep']+global_fields,
+        "starkSpec": ['I', 'Q', 'P', 'shots', 'Gain Sweep']+global_fields,
+    }
+
+    ## Open the file for pulling the data
+    with h5py.File(filename, 'r') as f:
+        
+        ## Loop over all the top-level keys in the file (i.e., Qubit index)
+        for qubit_group in f.keys():
+            
+            ## Convert group name (e.g., "Q1") to a zero-based index.
+            qubit_index = int(qubit_group[1:]) - 1
+            
+            qubit_data = {} ## temporary container for output
+            
+            ## If this is a data type that is not defined, throw an error
+            if data_type not in target_fields.keys():
+                raise ValueError(f"Unsupported data_type: {data_type}")
+
+            ## Now check all the keys in this data group (i.e., for this qubit)
+            for dataset_name in f[qubit_group].keys():
+
+                if dataset_name not in target_fields[data_type]:
+                    print(f"Warning: Key '{dataset_name}' not found in target data field list for data_type '{data_type}'. Skipping.")
+
+                else:
+                    ## Copy the H5 dataset into the temporary dictionary for this qubit
+                    qubit_data[dataset_name] = unwrap_singleton_list([f[qubit_group][dataset_name][()]] * save_r)
+
+            ## Save this qubit's full data dict to our output container
+            data[data_type][qubit_index] = qubit_data
+
+    return data
+

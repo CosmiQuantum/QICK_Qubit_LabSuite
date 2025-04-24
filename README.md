@@ -102,7 +102,7 @@ If you'd like to add a new analysis, follow these steps.
 2. Move that file into `src/qicklab/analysis`.
 3. Open the file `src/qicklab/analysis/__init__.py` and add a line importing your class:
 ```
-from myAnaClass import myAnaClass
+from .myAnaClass import myAnaClass
 ```
 And that's it! Now when you `from qicklab.analysis import *`, your analysis will be ready for use.
 

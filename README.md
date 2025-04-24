@@ -3,7 +3,7 @@
 The qubit analysis and data acquisition codebase for the CosmiQuantum group at Fermilab. Specifically for qubit operations at the NEXUS and QUIET cryogenic facilities.
 
 Custodians:
-- Olivia Seidel (UT Austin)
+- Olivia Seidel (UT Arlington)
 - Joyce Christiansen-Salameh (Cornell)
 - Dylan Temples (FNAL)
 

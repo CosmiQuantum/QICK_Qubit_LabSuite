@@ -89,9 +89,7 @@ class starkspec:
 
                 i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
 
-                if self.thresholding:
-                    states = (i_new > self.threshold)
-                else:
+                if not self.thresholding:
                     states = np.mean(i_new)
                 p_excited_in_round.append(np.mean(states))
 

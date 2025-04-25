@@ -4,7 +4,6 @@ import datetime
 import h5py
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
 
@@ -69,9 +68,9 @@ class t1:
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
-        p_excited = np.zeros(n) #[]
+        p_excited = []
         for round in np.arange(n):
-            p_excited_in_round = np.zeros(steps) #[]
+            p_excited_in_round = []
             for idx in np.arange(steps):
                 this_I = I_shots[round][:, idx]
                 this_Q = Q_shots[round][:, idx]
@@ -81,11 +80,11 @@ class t1:
                 if not self.thresholding:
                     states = np.mean(i_new)
 
-                p_excited_in_round[idx] = np.mean(states)
+                p_excited_in_round.append(np.mean(states))
 
-            p_excited[round] = p_excited_in_round.tolist()
+            p_excited.append(p_excited_in_round)
 
-        return p_excited.tolist()
+        return p_excited
 
     def t1_fit(self, signal, delay_times, round, n, plot=False):
 

@@ -5,8 +5,8 @@ from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_stark_simple
-from .shot_tools import process_shots
-from .stark_tools import gain2freq_detuning
+# from .shot_tools import process_shots
+# from .stark_tools import gain2freq_detuning
 
 class starkspec:
 
@@ -62,8 +62,8 @@ class starkspec:
 
         _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
-    def process_shots(self, I_shots, Q_shots, n, steps):
-        return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
+    # def process_shots(self, I_shots, Q_shots, n, steps):
+    #     return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
 
     # def gain2freq(self, gains):
     #     steps = int(len(gains)/2)
@@ -74,6 +74,27 @@ class starkspec:
 
     #     freqs = np.concatenate(freq_posneg)
     #     return freqs
+
+    def process_shots(self, I_shots, Q_shots, n, steps):
+
+        p_excited = []
+        for round in np.arange(n):
+            p_excited_in_round = []
+            for idx in np.arange(steps):
+                this_I = I_shots[round][idx,:]
+                this_Q = Q_shots[round][idx,:]
+
+                i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
+                q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
+                if self.thresholding:
+                    states = (i_new > self.threshold)
+                else:
+                    states = np.mean(i_new)
+                p_excited_in_round.append(np.mean(states))
+
+            p_excited.append(p_excited_in_round)
+
+        return p_excited
 
     def gain2freq(self, gains):
         steps = int(len(gains)/2)

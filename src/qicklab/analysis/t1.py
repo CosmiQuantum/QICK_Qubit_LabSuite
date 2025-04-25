@@ -109,7 +109,7 @@ class t1:
         t1_errs = np.zeros(n) #[]
 
         for round in np.arange(n):
-            _, t1_errs[round], t1s[round] = get_t1_in_round(delay_times, p_excited, n, round, plot=False)
+            _, t1_errs[round], t1s[round] = self.get_t1_in_round(delay_times, p_excited, n, round, plot=False)
 
         return t1s.tolist(), t1_errs.tolist()
 

@@ -75,28 +75,6 @@ class starkspec:
         freqs = np.concatenate(freq_posneg)
         return freqs
 
-    # def process_shots(self, I_shots, Q_shots, n, steps):
-
-    #     p_excited = []
-    #     for round in np.arange(n):
-    #         p_excited_in_round = []
-    #         for idx in np.arange(steps):
-    #             this_I = I_shots[round][idx,:]
-    #             this_Q = Q_shots[round][idx,:]
-
-    #             # i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
-    #             # q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
-
-    #             i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
-
-    #             if not self.thresholding:
-    #                 states = np.mean(i_new)
-    #             p_excited_in_round.append(np.mean(states))
-
-    #         p_excited.append(p_excited_in_round)
-
-    #     return p_excited
-
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):
         p_excited_in_round = p_excited[round][:]
 

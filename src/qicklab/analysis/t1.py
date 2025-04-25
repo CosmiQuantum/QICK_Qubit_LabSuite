@@ -1,8 +1,4 @@
-import os, sys
-import re
-import datetime
-import h5py
-
+import os, datetime
 import numpy as np
 
 from scipy.optimize import curve_fit
@@ -12,7 +8,7 @@ from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plotting import plot_shots, plot_t1_simple
-from .fitting import t1_fit
+from .fitting import fit_t1
 
 class t1:
 
@@ -63,8 +59,7 @@ class t1:
         title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
                  f'rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
 
-        fig, ax = plot_shots(i_new, q_new, states, title=title)
-        del this_I, this_Q, i_new, q_new, states
+        _, _ = plot_shots(i_new, q_new, states, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 
@@ -88,7 +83,7 @@ class t1:
 
     def t1_fit(self, signal, delay_times, round, n, plot=False):
 
-        T1_est, T1_err, q1_fit_exponential = t1_fit(signal, delay_times)
+        T1_est, T1_err, q1_fit_exponential = fit_t1(signal, delay_times)
 
         title = (f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: ' +
                  f't1_ge = {T1_est:.3f} +/- {T1_err} us')
@@ -109,8 +104,7 @@ class t1:
         t1_errs = np.zeros(n) #[]
 
         for round in np.arange(n):
-            _, t1_errs[round], t1s[round] = self.get_t1_in_round(delay_times, p_excited, n, round, 
-                plot=True if round in plot_idxs else False)
+            _, t1_errs[round], t1s[round] = self.get_t1_in_round(delay_times, p_excited, n, round, plot=(round in plot_idxs))
 
         return t1s.tolist(), t1_errs.tolist()
 

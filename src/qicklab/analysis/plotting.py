@@ -55,11 +55,22 @@ def plot_shots(Ivals, Qvals, states, title=None, rotated=False, ax=None):
     if title is not None: ax.set_title(title)
     return fig, ax
 
+def plot_qspec_simple(qspec_probe_freqs, thisI, thisQ, fitcurve=None, title=None, ax=None):
+    if ax is None: fig, ax = plt.subplots()
+    else: fig = None
+    ax.plot(qspec_probe_freqs, np.sqrt(np.square(thisI) + np.square(thisQ)), label='data')
+    if fitcurve is not None: ax.plot(qspec_probe_freqs, fitcurve, label='lorentzian fit')
+    ax.legend()
+    ax.set_xlabel('qubit probe frequency [MHz]')
+    ax.set_ylabel('I,Q magnitude [a.u.]')
+    if title is not None: ax.set_title(title)
+    return fig, ax
 
-def plot_t1_simple(signal, delay_times, fitcurve=None, title=None):
-    fig, ax = plt.subplots()
+def plot_t1_simple(signal, delay_times, fitcurve=None, title=None, ax=None):
+    if ax is None: fig, ax = plt.subplots()
+    else: fig = None
     ax.plot(delay_times, signal, label='data')
-    ax.plot(delay_times, fitcurve, label='exponential fit')
+    if fitcurve is not None: ax.plot(delay_times, fitcurve, label='exponential fit')
     ax.set_xlabel('Delay Time [us]')
     ax.set_ylabel('P(e)')
     ax.legend()

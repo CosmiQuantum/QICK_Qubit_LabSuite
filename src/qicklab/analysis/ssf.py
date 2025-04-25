@@ -1,10 +1,6 @@
-import os, sys
-import re
-import datetime
-import h5py
+import os, datetime
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data

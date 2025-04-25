@@ -1,14 +1,9 @@
-import os, sys
-import re
-import datetime
-import h5py
-
+import os, datetime
 import numpy as np
-import matplotlib.pyplot as plt
 
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
-from .plotting import plot_resstark_simple
+from .plotting import plot_stark_simple
 
 
 class resstarkspec:

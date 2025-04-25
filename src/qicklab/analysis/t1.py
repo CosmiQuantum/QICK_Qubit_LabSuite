@@ -9,6 +9,7 @@ from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plotting import plot_shots, plot_t1_simple
 from .fitting import fit_t1
+from .shot_tools import process_shots
 
 class t1:
 
@@ -62,23 +63,7 @@ class t1:
         _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
-        p_excited = []
-        for round in np.arange(n):
-            p_excited_in_round = []
-            for idx in np.arange(steps):
-                this_I = I_shots[round][:, idx]
-                this_Q = Q_shots[round][:, idx]
-
-                i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
-
-                if not self.thresholding:
-                    states = np.mean(i_new)
-
-                p_excited_in_round.append(np.mean(states))
-
-            p_excited.append(p_excited_in_round)
-
-        return p_excited
+        return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
 
     def t1_fit(self, signal, delay_times, round, n, plot=False):
 

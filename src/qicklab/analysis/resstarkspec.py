@@ -4,6 +4,8 @@ import numpy as np
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plotting import plot_stark_simple
+from .shot_tools import process_shots
+from .stark_tools import gain2freq_resonator
 
 
 class resstarkspec:
@@ -48,40 +50,21 @@ class resstarkspec:
         return dates, n, gain_sweep, steps, reps, I_shots, Q_shots, P
 
     def plot_shots(self, I_shots, Q_shots, gains, n, round=0, idx=10):
-        ## >TO DO< This is duplicated from t1 -- how to condense in a sensical way?
         this_I = I_shots[round][idx,:]
         this_Q = Q_shots[round][idx,:]
 
         i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
 
         title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
-                 f'rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
+                 f'rotated I,Q shots for res_stark_spec at gain: {np.round(gains[idx],2)}')
 
         _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
-        ## >TO DO< This is duplicated from t1 -- how to condense in a sensical way?
-        p_excited = []
-        for round in np.arange(n):
-            p_excited_in_round = []
-            for idx in np.arange(steps):
-                this_I = I_shots[round][:, idx]
-                this_Q = Q_shots[round][:, idx]
-
-                i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
-
-                if not self.thresholding:
-                    states = np.mean(i_new)
-
-                p_excited_in_round.append(np.mean(states))
-
-            p_excited.append(p_excited_in_round)
-
-        return p_excited
+        return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
 
     def gain2freq(self, gains):
-        freqs = np.square(gains) * self.stark_constant
-        return freqs
+        return gain2freq_resonator(gains, self.stark_constant)
 
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):
         p_excited_in_round = p_excited[round]

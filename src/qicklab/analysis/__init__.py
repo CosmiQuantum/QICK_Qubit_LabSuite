@@ -1,8 +1,12 @@
-from .fit_functions import *
+## High level tools go here
 from .fitting import *
 from .plotting import *
 
+## Backend analysis low-level tools go here
 from .h5_data import *
+from .fit_functions import *
+from .shot_tools import *
+from .stark_tools import *
 
 ## Specific analysis classes go here
 from .auto_threshold import auto_threshold, auto_threshold_demo

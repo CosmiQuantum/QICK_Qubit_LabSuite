@@ -72,7 +72,7 @@ class starkspec:
 
         freq_posneg = gain2freq_detuning(gains_pos_detuning, gains_neg_detuning, self.duffing_constant, self.anharmonicity, self.detuning)
 
-        freqs = np.concatenate((freq_neg_detuning, freq_pos_detuning))
+        freqs = np.concatenate(freq_posneg)
         return freqs
 
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):

@@ -4,7 +4,7 @@ from .h5_data import *
 ## Backend analysis low-level tools go here
 from .fit_functions import *
 from .fit_tools import *
-from .plot_tool import *
+from .plot_tools import *
 from .shot_tools import *
 from .stark_tools import *
 

@@ -21,33 +21,40 @@ anharmonicity = [-173.65, -177.3, -173.74, -171.45, -155.9, -165.9] #from run6 h
 detuning = [20, 10, 10, 10, 10, 10]
 
 if analysis_flags["get_threshold"]:
+    print("Determining threshold...")
     auto = auto_threshold(data_dir, dataset, QubitIndex)
     I_shots, Q_shots = auto.load_sample()
     theta, threshold, i_new, q_new = auto.get_threshold(I_shots, Q_shots, plot=True)
 
 if analysis_flags["load_all_data"]:
+    print("Loading qspec data...")
     qspec_ge = qspec(data_dir, dataset, QubitIndex)
     qspec_dates, qspec_n, qspec_probe_freqs, qspec_I, qspec_Q = qspec_ge.load_all()
     qspec_freqs, qspec_errs, qspec_fwhms = qspec_ge.get_all_qspec_freq(qspec_probe_freqs, qspec_I, qspec_Q, qspec_n)
     start_time = qspec_dates[0]
 
+    print("Loading SSF data...")
     ssf_ge = ssf(data_dir, dataset, QubitIndex)
     ssf_dates, ssf_n, I_g, Q_g, I_e, Q_e, fid, angles = ssf_ge.load_all()
 
+    print("Loading T1 data...")
     t1_ge = t1(data_dir, dataset, QubitIndex, theta, threshold)
     t1_dates, t1_n, delay_times, t1_steps, t1_reps, t1_I_shots, t1_Q_shots = t1_ge.load_all()
     t1_p_excited = t1_ge.process_shots(t1_I_shots, t1_Q_shots, t1_n, t1_steps)
     t1s, t1_errs = t1_ge.get_all_t1(delay_times, t1_p_excited, t1_n)
 
+    print("Loading HGqspec data...")
     hgqspec = qspec(data_dir, dataset, QubitIndex, expt_name="high_gain_qspec_ge")
     hgqspec_dates, hgqspec_n, hgqspec_probe_freqs, hgqspec_I, hgqspec_Q = hgqspec.load_all()
     hgqspec_mag = np.sqrt(np.square(hgqspec_I) + np.square(hgqspec_Q))
 
+    print("Loading resonator Stark spec data...")
     rstark = resstarkspec(data_dir, dataset, QubitIndex, res_stark_constant[QubitIndex], theta, threshold)
     rstark_dates, rstark_n, rstark_gains, rstark_steps, rstark_reps, rstark_I_shots, rstark_Q_shots, rstark_P = rstark.load_all()
     rstark_p_excited = rstark.process_shots(rstark_I_shots, rstark_Q_shots, rstark_n, rstark_steps)
     rstark_freqs = rstark.gain2freq(rstark_gains)
 
+    print("Loading detuning Stark spec data...")
     stark = starkspec(data_dir, dataset, QubitIndex, duffing_constant[QubitIndex], theta, threshold, anharmonicity[QubitIndex], detuning[QubitIndex])
     stark_dates, stark_n, stark_gains, stark_steps, stark_reps, stark_I_shots, stark_Q_shots, stark_P = stark.load_all()
     stark_p_excited = stark.process_shots(stark_I_shots, stark_Q_shots, stark_n, stark_steps)
@@ -55,6 +62,7 @@ if analysis_flags["load_all_data"]:
 
 
 if analysis_flags["timestream"]:
+    print("Generating timestream plots...")
 
     fig, ax = plt.subplots(3,2, layout='constrained')
     fig.suptitle(f'dataset {dataset} qubit {QubitIndex + 1} timestream')
@@ -120,6 +128,7 @@ if analysis_flags["timestream"]:
 
 
 if analysis_flags['round']:
+    print("Generating round-robin plots...")
     fig, ax = plt.subplots(2, 3, layout='constrained')
     plt.rcParams['lines.linewidth'] = 1
 

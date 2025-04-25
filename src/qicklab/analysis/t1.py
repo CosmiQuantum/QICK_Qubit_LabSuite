@@ -88,7 +88,7 @@ class t1:
 
     def t1_fit(self, signal, delay_times, round, n, plot=False):
 
-        T1_est, T1_err, q1_fit_exponential = t1_fit(singal, delay_times)
+        T1_est, T1_err, q1_fit_exponential = t1_fit(signal, delay_times)
 
         title = (f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: ' +
                  f't1_ge = {T1_est:.3f} +/- {T1_err} us')
@@ -103,15 +103,26 @@ class t1:
 
         return q1_fit_exponential, T1_err, T1_est
 
-    def get_all_t1(self, delay_times, p_excited, n):
+    def get_all_t1(self, delay_times, p_excited, n, plot_idxs=[]):
 
         t1s = np.zeros(n) #[]
         t1_errs = np.zeros(n) #[]
 
         for round in np.arange(n):
-            _, t1_errs[round], t1s[round] = self.get_t1_in_round(delay_times, p_excited, n, round, plot=False)
+            _, t1_errs[round], t1s[round] = self.get_t1_in_round(delay_times, p_excited, n, round, 
+                plot=True if round in plot_idxs else False)
 
         return t1s.tolist(), t1_errs.tolist()
 
-    
 
+def t1_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0):
+    selected_round = [10, 73]
+    threshold = 0 #overwritten when get_threshold flag is set to True
+    theta = 0 #overwritten when get_threshold flag is set to True
+
+    t1_ge = t1(data_dir, dataset, QubitIndex, theta, threshold)
+    t1_dates, t1_n, delay_times, t1_steps, t1_reps, t1_I_shots, t1_Q_shots = t1_ge.load_all()
+    t1_p_excited = t1_ge.process_shots(t1_I_shots, t1_Q_shots, t1_n, t1_steps)
+    t1s, t1_errs = t1_ge.get_all_t1(delay_times, t1_p_excited, t1_n, plot_idxs=selected_round)
+
+    return t1_dates, t1s, t1_errs

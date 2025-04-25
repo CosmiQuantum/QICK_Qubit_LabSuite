@@ -115,7 +115,7 @@ class t1:
         return t1s.tolist(), t1_errs.tolist()
 
 
-def t1_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, threshold=1285.0890401261518, theta=-2.9647793243611957, selected_round = [10, 73]):
+def t1_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, threshold=1285.0890401261518, theta=-2.9647793243611957, selected_round=[10, 73]):
     # selected_round = [10, 73]
     # threshold = 0 #overwritten when get_threshold flag is set to True
     # theta = 0 #overwritten when get_threshold flag is set to True

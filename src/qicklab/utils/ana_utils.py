@@ -11,7 +11,7 @@ def rotate_and_threshold(Ivals, Qvals, theta, threshold):
     q_new = Ivals * np.sin(theta) + Qvals * np.cos(theta)
 
     states = (i_new > threshold)
-    return i_new, q_new, threshold
+    return i_new, q_new, states
 
 def roll(data: np.ndarray) -> np.ndarray:
     """

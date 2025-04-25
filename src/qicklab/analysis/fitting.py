@@ -31,7 +31,8 @@ from ..utils.ana_utils import max_offset_difference_with_x
 from ..utils.file_utils import create_folder_if_not_exists
 from  .fit_functions import exponential, lorentzian, allan_deviation_model
 
-def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
+# def t1_fit(I, Q, delay_times=None, signal='None'):
+def t1_fit(signal_data, delay_times):
     """
     Fit an exponential decay curve to I and Q signal data to estimate the T1 decay constant.
 
@@ -60,22 +61,22 @@ def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
                    q1_fit_exponential (array_like): Fitted exponential curve.
                    plot_sig (str): Indicator of which signal was used ('I' or 'Q').
     """
-    if 'I' in signal:
-        signal_data = I
-        plot_sig = 'I'
-    elif 'Q' in signal:
-        signal_data = Q
-        plot_sig = 'Q'
-    else:
-        # Determine which signal has a larger overall change
-        if abs(I[-1] - I[0]) > abs(Q[-1] - Q[0]):
-            signal_data = I
-            plot_sig = 'I'
-        else:
-            signal_data = Q
-            plot_sig = 'Q'
+    # if 'I' in signal:
+    #     signal_data = I
+    #     plot_sig = 'I'
+    # elif 'Q' in signal:
+    #     signal_data = Q
+    #     plot_sig = 'Q'
+    # else:
+    #     # Determine which signal has a larger overall change
+    #     if abs(I[-1] - I[0]) > abs(Q[-1] - Q[0]):
+    #         signal_data = I
+    #         plot_sig = 'I'
+    #     else:
+    #         signal_data = Q
+    #         plot_sig = 'Q'
 
-    # Initial guess for parameters: amplitude, time shift, decay constant, baseline
+    # Initial guess for parameters: amplitude (a), time shift (b), decay constant (c), baseline (d)
     q1_a_guess = np.max(signal_data) - np.min(signal_data)
     q1_b_guess = 0
     q1_c_guess = (delay_times[-1] - delay_times[0]) / 5
@@ -84,30 +85,20 @@ def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
 
     # Define bounds: T1 (c) must be positive, amplitude (a) can be any value.
     lower_bounds = [-np.inf, -np.inf, 0, -np.inf]
-    upper_bounds = [np.inf, np.inf, np.inf, np.inf]
+    upper_bounds = [np.inf, np.inf, np.inf, np.inf]   # No upper bound on parameters
 
     # Fit the exponential function to the data
-    q1_popt, q1_pcov = curve_fit(
-        exponential,
-        delay_times,
-        signal_data,
-        p0=q1_guess,
-        bounds=(lower_bounds, upper_bounds),
-        method='trf',
-        maxfev=10000
-    )
+    q1_popt, q1_pcov = curve_fit(exponential, delay_times, signal_data,
+        p0=q1_guess, bounds=(lower_bounds, upper_bounds), method='trf', maxfev=10000)
 
-    # Generate the fitted exponential curve
-    fit_exponential = exponential(delay_times, *q1_popt)
+    # # Generate the fitted exponential curve
+    # fit_exponential = exponential(delay_times, *q1_popt)
 
     # Extract T1 (decay constant) and its error
     T1_est = q1_popt[2]
     T1_err = np.sqrt(q1_pcov[2][2]) if q1_pcov[2][2] >= 0 else float('inf')
 
-    if return_everything:
-        return fit_exponential, T1_err, T1_est, plot_sig
-    else:
-        return T1_est, T1_err
+    return T1_est, T1_err, exponential(delay_times, *q1_popt)
 
 def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
     """

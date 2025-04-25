@@ -104,7 +104,7 @@ class starkspec:
 
         return p_excited_in_round
 
-def starkspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, duffing_constant=220, threshold=1285.08904, theta=-2.96478, selected_round=[10, 73]):
+def starkspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, duffing_constant=220, threshold=-1285.08904, theta=0.17681, selected_round=[10, 73]):
     stark = starkspec(data_dir, dataset, QubitIndex, duffing_constant, theta, threshold, anharmonicity[QubitIndex], detuning[QubitIndex])
     stark_dates, stark_n, stark_gains, stark_steps, stark_reps, stark_I_shots, stark_Q_shots, stark_P = stark.load_all()
     stark_p_excited = stark.process_shots(stark_I_shots, stark_Q_shots, stark_n, stark_steps)

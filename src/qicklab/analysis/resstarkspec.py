@@ -94,8 +94,7 @@ class resstarkspec:
         return p_excited_in_round
 
 
-
-def resstarkspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, res_stark_constant=-17, threshold=1285.08904, theta=-2.96478, selected_round=[10, 73]):
+def resstarkspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, res_stark_constant=-17, threshold=-1285.08904, theta=0.17681, selected_round=[10, 73]):
     rstark = resstarkspec(data_dir, dataset, QubitIndex, res_stark_constant, theta, threshold)
     rstark_dates, rstark_n, rstark_gains, rstark_steps, rstark_reps, rstark_I_shots, rstark_Q_shots, rstark_P = rstark.load_all()
     rstark_p_excited = rstark.process_shots(rstark_I_shots, rstark_Q_shots, rstark_n, rstark_steps)

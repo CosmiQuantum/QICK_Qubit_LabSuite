@@ -1,10 +1,10 @@
 ## High level tools go here
-from .fitting import *
-from .plotting import *
+from .h5_data import *
 
 ## Backend analysis low-level tools go here
-from .h5_data import *
 from .fit_functions import *
+from .fit_tools import *
+from .plot_tool import *
 from .shot_tools import *
 from .stark_tools import *
 

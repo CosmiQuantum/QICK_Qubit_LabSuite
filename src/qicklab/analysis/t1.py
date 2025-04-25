@@ -7,8 +7,8 @@ from .fit_functions import exponential
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
-from .plotting import plot_shots, plot_t1_simple
-from .fitting import fit_t1
+from .plot_tools import plot_shots, plot_t1_simple
+from .fit_tools import fit_t1
 from .shot_tools import process_shots
 
 class t1:

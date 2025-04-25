@@ -5,8 +5,8 @@ from scipy.optimize import curve_fit
 
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
-from .plotting import plot_qspec_simple
-from .fitting import fit_lorenzian
+from .plot_tools import plot_qspec_simple
+from .fit_tools import fit_lorenzian
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):

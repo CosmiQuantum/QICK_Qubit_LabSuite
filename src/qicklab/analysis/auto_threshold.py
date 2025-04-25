@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
-from .plotting import plot_shots
+from .plot_tools import plot_shots
 
 class auto_threshold:
     def __init__(self, data_dir, dataset, QubitIndex, folder = "study_data", expt_name = "starkspec_ge"):

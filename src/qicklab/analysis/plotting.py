@@ -45,6 +45,36 @@ from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import convert_datetimes_to_seconds
 from  .fit_functions import allan_deviation_model
 
+def plot_shots(Ivals, Qvals, states, param_dict=None):
+    fig, ax = plt.subplots()
+    ax.scatter(Ivals, Qvals, c=states)
+    ax.set_xlabel('I [a.u.]')
+    ax.set_ylabel('Q [a.u.]')
+
+    ## Handle the title
+    title = ''
+    if type(param_dict) == type({}):
+        param_keys = [k.lower() in param_dict.keys]
+
+        if 'dataset' in param_keys:
+            title += f'Dataset {param_dict['dataset']} '
+
+        if 'qubitidx' in param_keys:
+            title += f'qubit {param_dict['qubitidx']} '
+
+        if ('round' in param_keys) and ('nrounds' in param_keys):
+            title += f'qubit {param_dict['round']+1} of {param_dict['nrounds']}: '
+
+    title += "Rotated I,Q shots for t1_ge "
+
+    if type(param_dict) == type({}):
+
+        if 'delay_time' in param_keys:
+            title += f'at delay time {param_dict['dataset']} us'
+
+    ax.set_title(title)
+    return fig, ax
+
 
 def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, round_num=0, expt_name="ss_repeat_meas", plot=True, fig_quality=100, fig_filename=None):
     """

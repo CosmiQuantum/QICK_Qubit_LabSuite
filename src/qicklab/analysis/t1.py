@@ -12,6 +12,7 @@ from .fit_functions import exponential
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
+from .plotting import plot_shots
 
 class t1:
 
@@ -50,21 +51,25 @@ class t1:
         return dates, n, delay_times, steps, reps, I_shots, Q_shots
 
     def plot_shots(self, I_shots, Q_shots, delay_times, n, round=0, idx=10):
-        print(np.shape(I_shots))
+        # print(np.shape(I_shots))
 
         this_I = I_shots[round][:,idx]
         this_Q = Q_shots[round][:,idx]
 
-        print(np.shape(this_I))
+        # print(np.shape(this_I))
 
         i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
 
-        fig, ax = plt.subplots()
-        ax.scatter(i_new, q_new, c=states)
-        ax.set_xlabel('I [a.u.]')
-        ax.set_ylabel('Q [a.u.]')
-        ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
-        #plt.show(block=False)
+        infodict = {
+            'dataset': self.dataset,
+            'qubit': self.QubitIndex,
+            'round': round,
+            'nrounds': n,
+            'delay_time': np.round(delay_times[idx],2)
+        }
+
+        fig, ax = plot_shots(i_new, q_new, states, param_dict=infodict)
+        del this_I, this_Q, i_new, q_new, states, infodict
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 

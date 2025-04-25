@@ -67,3 +67,11 @@ class ssf:
 
         return ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye
 
+def ssf_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, selected_round=[10, 73]):
+    ssf_ge = ssf(data_dir, dataset, QubitIndex)
+    ssf_dates, ssf_n, I_g, Q_g, I_e, Q_e, fid, angles = ssf_ge.load_all()
+    
+    outdata = {}
+    for rnd in selected_round:
+        outdata[rnd] = ssf_ge.get_ssf_in_round(I_g, Q_g, I_e, Q_e, rnd)
+    return outdata

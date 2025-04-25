@@ -72,3 +72,12 @@ class qspec:
             fwhms[round] = fwhm
 
         return qspec_freqs.tolist(), qspec_errs.tolist(), fwhms.tolist()
+
+def qspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, selected_round=[10, 73]):
+
+    qspec_ge = qspec(data_dir, dataset, QubitIndex)
+    qspec_dates, qspec_n, qspec_probe_freqs, qspec_I, qspec_Q = qspec_ge.load_all()
+    qspec_freqs, qspec_errs, qspec_fwhms = qspec_ge.get_all_qspec_freq(qspec_probe_freqs, qspec_I, qspec_Q, qspec_n, plot_idxs=selected_round)
+    start_time = qspec_dates[0]
+
+    return qspec_dates, qspec_freqs

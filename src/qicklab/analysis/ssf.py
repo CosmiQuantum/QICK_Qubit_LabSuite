@@ -6,6 +6,7 @@ import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 
+from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 
@@ -53,15 +54,14 @@ class ssf:
         xg, yg = np.median(ig), np.median(qg)
         xe, ye = np.median(ie), np.median(qe)
 
-        """Compute the rotation angle"""
+        ## Compute the rotation angle
         theta = -np.arctan2((ye - yg), (xe - xg))
-        """Rotate the IQ data"""
-        ig_new = ig * np.cos(theta) - qg * np.sin(theta)
-        qg_new = ig * np.sin(theta) + qg * np.cos(theta)
-        ie_new = ie * np.cos(theta) - qe * np.sin(theta)
-        qe_new = ie * np.sin(theta) + qe * np.cos(theta)
 
-        """New means of each blob"""
+        ## Apply the rotation angle to the IQ data
+        ig_new, qg_new, _ = rotate_and_threshold(ig, qg, theta, 0.0)
+        ie_new, qe_new, _ = rotate_and_threshold(ie, qe, theta, 0.0)
+
+        ## New means of each blob
         xg, yg = np.median(ig_new), np.median(qg_new)
         xe, ye = np.median(ie_new), np.median(qe_new)
 

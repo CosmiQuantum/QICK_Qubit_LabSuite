@@ -115,10 +115,10 @@ class t1:
         return t1s.tolist(), t1_errs.tolist()
 
 
-def t1_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0):
-    selected_round = [10, 73]
-    threshold = 0 #overwritten when get_threshold flag is set to True
-    theta = 0 #overwritten when get_threshold flag is set to True
+def t1_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, threshold=0, theta=0, selected_round = [10, 73]):
+    # selected_round = [10, 73]
+    # threshold = 0 #overwritten when get_threshold flag is set to True
+    # theta = 0 #overwritten when get_threshold flag is set to True
 
     t1_ge = t1(data_dir, dataset, QubitIndex, theta, threshold)
     t1_dates, t1_n, delay_times, t1_steps, t1_reps, t1_I_shots, t1_Q_shots = t1_ge.load_all()

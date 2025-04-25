@@ -94,7 +94,7 @@ class resstarkspec:
 
         title = (f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: ' + 
                   ' resonator stark spectroscopy')
-        if plot: _, _ = plot_resstark_simple(gains, self.gain2freq(gains), p_excited_in_round, title=title)
+        if plot: _, _ = plot_stark_simple(gains, self.gain2freq(gains), p_excited_in_round, title=title)
 
         return p_excited_in_round
 

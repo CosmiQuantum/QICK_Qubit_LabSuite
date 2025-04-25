@@ -53,27 +53,19 @@ class starkspec:
         return dates, n, gain_sweep, steps, reps, I_shots, Q_shots, P
 
     def plot_shots(self, I_shots, Q_shots, gains, n, round=0, idx=10):
-        print(np.shape(I_shots))
-
+        ## >TO DO< This is duplicated from t1 -- how to condense in a sensical way?
         this_I = I_shots[round][idx,:]
         this_Q = Q_shots[round][idx,:]
 
-        print(np.shape(this_I))
+        i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
 
-        i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
-        q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
+        title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
+                 f'rotated I,Q shots for stark_spec at gain: {np.round(gains[idx],2)}')
 
-        states = (i_new > self.threshold)
-
-        fig, ax = plt.subplots()
-        ax.scatter(i_new, q_new, c=states)
-        ax.set_xlabel('I [a.u.]')
-        ax.set_ylabel('Q [a.u.]')
-        ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for stark_spec at gain: {np.round(gains[idx],2)} us')
-        #plt.show(block=False)
+        _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
-
+        ## >TO DO< This is duplicated from t1 -- how to condense in a sensical way?
         p_excited = []
         for round in np.arange(n):
             p_excited_in_round = []
@@ -110,18 +102,20 @@ class starkspec:
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):
         p_excited_in_round = p_excited[round][:]
 
-        if plot:
-            fig, ax = plt.subplots(2,1, layout='constrained')
-            fig.suptitle(f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n} resonator stark spectroscopy')
-
-            ax[0].plot(gains, p_excited_in_round)
-            ax[0].set_xlabel('resonator stark gain [a.u.]')
-            ax[0].set_ylabel('P(e)')
-
-            ax[1].plot(self.gain2freq(gains), p_excited_in_round)
-            ax[1].set_xlabel('stark shift [MHz]')
-            ax[1].set_ylabel('P(e)')
-            #plt.show(block=False)
+        title = (f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: ' + 
+                  ' stark spectroscopy')
+        if plot: _, _ = plot_stark_simple(gains, self.gain2freq(gains), p_excited_in_round, title=title)
 
         return p_excited_in_round
+
+def starkspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, duffing_constant=220, threshold=1285.08904, theta=-2.96478, selected_round=[10, 73]):
+    stark = starkspec(data_dir, dataset, QubitIndex, duffing_constant, theta, threshold, anharmonicity[QubitIndex], detuning[QubitIndex])
+    stark_dates, stark_n, stark_gains, stark_steps, stark_reps, stark_I_shots, stark_Q_shots, stark_P = stark.load_all()
+    stark_p_excited = stark.process_shots(stark_I_shots, stark_Q_shots, stark_n, stark_steps)
+    stark_freqs = stark.gain2freq(stark_gains)
+
+    outdata = {}
+    for rnd in selected_round:
+        outdata[rnd] = stark.get_p_excited_in_round(rstark_gains, rstark_p_excited, rstark_n, rnd, plot=True)
+    return outdata
 

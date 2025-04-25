@@ -77,11 +77,11 @@ def plot_t1_simple(signal, delay_times, fitcurve=None, title=None, ax=None):
     if title is not None: ax.set_title(title)
     return fig, ax
 
-def plot_resstark_simple(gains, freqs, p_excited, title=None, ax=None):
+def plot_stark_simple(gains, freqs, p_excited, title=None, ax=None):
     if ax is None: fig, ax = plt.subplots(2,1, layout='constrained')
     else: fig = None
     ax[0].plot(gains, p_excited)
-    ax[0].set_xlabel('resonator stark gain [a.u.]')
+    ax[0].set_xlabel('stark gain [a.u.]')
     ax[0].set_ylabel('P(e)')
 
     ax[1].plot(freqs, p_excited)

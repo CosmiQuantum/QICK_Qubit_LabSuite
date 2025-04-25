@@ -45,7 +45,7 @@ from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import convert_datetimes_to_seconds
 from  .fit_functions import allan_deviation_model
 
-def plot_shots(Ivals, Qvals, states, title=None, rotated=False, ax=None):
+def plot_shots(Ivals, Qvals, states, rotated=False, title=None, ax=None):
     if ax is None: fig, ax = plt.subplots()
     else: fig = None
     ax.scatter(Ivals, Qvals, c=states)
@@ -76,6 +76,40 @@ def plot_t1_simple(signal, delay_times, fitcurve=None, title=None, ax=None):
     ax.legend()
     if title is not None: ax.set_title(title)
     return fig, ax
+
+def plot_resstark_simple(gains, freqs, p_excited, title=None, ax=None):
+    if ax is None: fig, ax = plt.subplots(2,1, layout='constrained')
+    else: fig = None
+    ax[0].plot(gains, p_excited)
+    ax[0].set_xlabel('resonator stark gain [a.u.]')
+    ax[0].set_ylabel('P(e)')
+
+    ax[1].plot(freqs, p_excited)
+    ax[1].set_xlabel('stark shift [MHz]')
+    ax[1].set_ylabel('P(e)')
+
+    if title is not None: fig.suptitle(title)
+    return fig, ax
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, round_num=0, expt_name="ss_repeat_meas", plot=True, fig_quality=100, fig_filename=None):
     """

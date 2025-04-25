@@ -59,7 +59,7 @@ class t1:
         title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
                  f'rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
 
-        _, _ = plot_shots(i_new, q_new, states, title=title)
+        _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
 

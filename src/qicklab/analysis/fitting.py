@@ -21,31 +21,15 @@ Usage Example:
 
 import os
 import datetime
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 from scipy.optimize import curve_fit
-from ..utils.file_helpers import create_folder_if_not_exists
 
-
-def exponential(x, a, b, c, d):
-    """
-    Exponential function for curve fitting.
-
-    The model is defined as:
-        y = a * exp(- (x - b) / c) + d
-
-    Parameters:
-        x (array_like): Independent variable.
-        a (float): Amplitude.
-        b (float): Time shift.
-        c (float): Decay constant (must be > 0).
-        d (float): Baseline offset.
-
-    Returns:
-        array_like: Calculated exponential function values.
-    """
-    return a * np.exp(- (x - b) / c) + d
-
+from ..utils.ana_utils import max_offset_difference_with_x
+from ..utils.file_utils import create_folder_if_not_exists
+from  .fit_functions import exponential, lorentzian, allan_deviation_model
 
 def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
     """
@@ -124,58 +108,6 @@ def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
         return fit_exponential, T1_err, T1_est, plot_sig
     else:
         return T1_est, T1_err
-
-
-def lorentzian(f, f0, gamma, A, B):
-    """
-    Lorentzian function used for curve fitting.
-
-    The model is defined as:
-        L(f) = A * gamma^2 / ((f - f0)^2 + gamma^2) + B
-
-    Parameters:
-        f (array_like): Frequency values.
-        f0 (float): Center frequency.
-        gamma (float): Half-width at half-maximum (HWHM).
-        A (float): Amplitude scaling factor.
-        B (float): Baseline offset.
-
-    Returns:
-        array_like: Calculated Lorentzian function values.
-    """
-    return A * gamma ** 2 / ((f - f0) ** 2 + gamma ** 2) + B
-
-
-def max_offset_difference_with_x(x_values, y_values, offset):
-    """
-    Find the x-value corresponding to the maximum average absolute difference from a given offset.
-
-    The function calculates the average absolute difference from the offset for triplets of consecutive y-values
-    and returns the x-value (from the middle point of each triplet) that corresponds to the maximum difference.
-
-    Parameters:
-        x_values (array_like): Array of x-values.
-        y_values (array_like): Array of y-values.
-        offset (float): The offset value to compare against.
-
-    Returns:
-        tuple:
-            corresponding_x: The x-value corresponding to the maximum average difference.
-            max_average_difference: The maximum average absolute difference calculated.
-    """
-    max_average_difference = -1
-    corresponding_x = None
-
-    for i in range(len(y_values) - 2):
-        y_triplet = y_values[i:i + 3]
-        average_difference = sum(abs(y - offset) for y in y_triplet) / 3
-
-        if average_difference > max_average_difference:
-            max_average_difference = average_difference
-            corresponding_x = x_values[i + 1]
-
-    return corresponding_x, max_average_difference
-
 
 def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
     """
@@ -274,7 +206,6 @@ def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
             print("Error during Lorentzian fit:", e)
         return None, None, None, None, None
 
-
 def get_lorentzian_fits(I, Q, freqs, verbose=False):
     """
     Perform Lorentzian fits on I and Q data based on frequency values and choose the best fit.
@@ -304,13 +235,3 @@ def get_lorentzian_fits(I, Q, freqs, verbose=False):
 
     return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
 
-def allan_deviation_model(tau, h0, h_m1, h_m2, A, tau0):
-    # White noise term: ∝ τ^(-1/2)
-    term_white = np.sqrt(h0 / 2) * tau**(-0.5)
-    # Flicker noise (1/ƒ noise) term: constant with τ
-    term_flicker = np.sqrt(2 * np.log(2) * h_m1)
-    # Random walk noise term: ∝ τ^(1/2)
-    term_randomwalk = np.sqrt((4 * np.pi**2 / 6) * h_m2) * tau**0.5
-    # Lorentzian noise term (exponentially correlated noise)
-    term_lorentz = np.sqrt(A * tau0 / tau * (4 * np.exp(-tau/tau0) - np.exp(-2*tau/tau0) - 3 + 2*tau/tau0))
-    return term_white + term_flicker + term_randomwalk + term_lorentz

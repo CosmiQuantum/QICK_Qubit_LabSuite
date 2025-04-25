@@ -65,14 +65,28 @@ class starkspec:
     def process_shots(self, I_shots, Q_shots, n, steps):
         return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
 
+    # def gain2freq(self, gains):
+    #     steps = int(len(gains)/2)
+    #     gains_pos_detuning = gains[steps:]
+    #     gains_neg_detuning = gains[:steps]
+
+    #     freq_posneg = gain2freq_detuning(gains_pos_detuning, gains_neg_detuning, self.duffing_constant, self.anharmonicity, self.detuning)
+
+    #     freqs = np.concatenate(freq_posneg)
+    #     return freqs
+
     def gain2freq(self, gains):
         steps = int(len(gains)/2)
         gains_pos_detuning = gains[steps:]
         gains_neg_detuning = gains[:steps]
 
-        freq_posneg = gain2freq_detuning(gains_pos_detuning, gains_neg_detuning, self.duffing_constant, self.anharmonicity, self.detuning)
+        # positive detuning, negative frequency shift
+        freq_pos_detuning = self.duffing_constant * (self.anharmonicity * np.square(gains_pos_detuning)) / (-1*self.detuning * (self.anharmonicity - self.detuning))
 
-        freqs = np.concatenate(freq_posneg)
+        # negative detuning, positive frequency shift
+        freq_neg_detuning = self.duffing_constant * (self.anharmonicity * np.square(gains_neg_detuning)) / (self.detuning * (self.anharmonicity + self.detuning))
+
+        freqs = np.concatenate((freq_neg_detuning, freq_pos_detuning))
         return freqs
 
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):

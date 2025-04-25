@@ -62,7 +62,6 @@ class t1:
         _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
-
         p_excited = []
         for round in np.arange(n):
             p_excited_in_round = []

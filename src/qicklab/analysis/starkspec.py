@@ -66,15 +66,14 @@ class starkspec:
         for round in np.arange(n):
             p_excited_in_round = []
             for idx in np.arange(steps):
-                this_I = I_shots[round][idx,:]
-                this_Q = Q_shots[round][idx,:]
+                this_I = I_shots[round][:, idx]
+                this_Q = Q_shots[round][:, idx]
 
-                i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
-                q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
-                if self.thresholding:
-                    states = (i_new > self.threshold)
-                else:
+                i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
+
+                if not self.thresholding:
                     states = np.mean(i_new)
+
                 p_excited_in_round.append(np.mean(states))
 
             p_excited.append(p_excited_in_round)

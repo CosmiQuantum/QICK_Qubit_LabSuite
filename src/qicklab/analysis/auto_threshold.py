@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.cluster import KMeans
 
+from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
+from .plotting import plot_shots
 
 class auto_threshold:
     def __init__(self, data_dir, dataset, QubitIndex, folder = "study_data", expt_name = "starkspec_ge"):
@@ -34,18 +36,21 @@ class auto_threshold:
 
         return I_shots[step_idx], Q_shots[step_idx]
 
-    def get_threshold(self, I_shots, Q_shots, plot=True):
+    def get_threshold(self, I_shots, Q_shots, plot=True, verbose=False):
+        ## Setup and evaluate the clustering algorithm to find the unrotated centroids
         kmeans = KMeans(n_clusters=2).fit(np.transpose([I_shots, Q_shots]))
-        print(kmeans.cluster_centers_[:,0])
         ye = kmeans.cluster_centers_[1,1]
         xe = kmeans.cluster_centers_[1,0]
         yg = kmeans.cluster_centers_[0,1]
         xg = kmeans.cluster_centers_[0,0]
+        if verbose: print(kmeans.cluster_centers_[:,0])
 
+        ## Find and apply the rotation angle to optimize readout in the "i_new" direction
         theta = -np.arctan2((ye - yg), (xe - xg))
-        i_new = I_shots * np.cos(theta) - Q_shots * np.sin(theta)
-        q_new = I_shots * np.sin(theta) + Q_shots * np.cos(theta)
+        i_new, q_new, _ = rotate_and_threshold(I_shots, Q_shots, theta, 0.0):
 
+        ## Setup and evaluate the clustering algorithm to find the rotated centroids
+        ## Use that to evaluate the threshold and classify the states
         kmeans_new = KMeans(n_clusters=2).fit(np.transpose([i_new, q_new]))
         threshold = np.mean([kmeans_new.cluster_centers_[1,0],kmeans_new.cluster_centers_[0,0]])
         state = kmeans_new.predict(np.transpose([i_new, q_new]))
@@ -53,24 +58,18 @@ class auto_threshold:
         if plot:
             fig, ax = plt.subplots(1,2, layout='constrained')
 
-            plot = ax[0]
-            plot.scatter(I_shots, Q_shots, c=state)
-            plot.set_xlabel('I [a.u.]')
-            plot.set_ylabel('Q [a.u.]')
-            plot.scatter(xg, yg, c='k')
-            plot.scatter(xe, ye, c='k')
-            plot.set_aspect('equal')
-            plot.set_title('unrotated I,Q')
+            plot_shots(I_shots, Q_shots, state, title='unrotated I,Q', rotated=False, ax=ax[0])
+            ax[0].scatter(xg, yg, c='k')
+            ax[0].scatter(xe, ye, c='k')
 
-            plot = ax[1]
-            plot.scatter(i_new, q_new, c=state)
-            plot.set_xlabel('I [a.u.]')
-            plot.set_ylabel('Q [a.u.]')
-            plot.set_aspect('equal')
-            plot.set_title(f'rotated I,Q; theta={np.round(theta,2)}, threshold={np.round(threshold,2)}')
-            plot.plot([threshold, threshold], [np.min(q_new), np.max(q_new)], 'k:')
-
-            #plt.show(block=False)
-
+            plot_shots(i_new, q_new, state, title=f'rotated I,Q; theta={np.round(theta,2)}, threshold={np.round(threshold,2)}', 
+                rotated=True, ax=ax[1])
+            ax[1].plot([threshold, threshold], [np.min(q_new), np.max(q_new)], 'k:')
 
         return theta, threshold, i_new, q_new
+
+
+def auto_threshold_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, selected_round=[10, 73]):
+    auto = auto_threshold(data_dir, dataset, QubitIndex)
+    I_shots, Q_shots = auto.load_sample()
+    return auto.get_threshold(I_shots, Q_shots, plot=True)

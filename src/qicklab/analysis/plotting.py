@@ -45,11 +45,13 @@ from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import convert_datetimes_to_seconds
 from  .fit_functions import allan_deviation_model
 
-def plot_shots(Ivals, Qvals, states, title=None):
-    fig, ax = plt.subplots()
+def plot_shots(Ivals, Qvals, states, title=None, rotated=False, ax=None):
+    if ax is None: fig, ax = plt.subplots()
+    else: fig = None
     ax.scatter(Ivals, Qvals, c=states)
-    ax.set_xlabel('I [a.u.]')
-    ax.set_ylabel('Q [a.u.]')
+    ax.set_xlabel('I\' [a.u.]' if rotated else 'I [a.u.]')
+    ax.set_ylabel('Q\' [a.u.]' if rotated else 'Q [a.u.]')
+    ax.set_aspect('equal')
     if title is not None: ax.set_title(title)
     return fig, ax
 

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 from .fit_functions import exponential
+from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 
@@ -56,10 +57,7 @@ class t1:
 
         print(np.shape(this_I))
 
-        i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
-        q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
-
-        states = (i_new > self.threshold)
+        i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
 
         fig, ax = plt.subplots()
         ax.scatter(i_new, q_new, c=states)

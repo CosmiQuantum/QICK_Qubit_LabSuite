@@ -47,7 +47,7 @@ class auto_threshold:
 
         ## Find and apply the rotation angle to optimize readout in the "i_new" direction
         theta = -np.arctan2((ye - yg), (xe - xg))
-        i_new, q_new, _ = rotate_and_threshold(I_shots, Q_shots, theta, 0.0):
+        i_new, q_new, _ = rotate_and_threshold(I_shots, Q_shots, theta, 0.0)
 
         ## Setup and evaluate the clustering algorithm to find the rotated centroids
         ## Use that to evaluate the threshold and classify the states

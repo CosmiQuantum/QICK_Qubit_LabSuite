@@ -8,7 +8,7 @@ from .h5_data import *
 
 ## Specific analysis classes go here
 from .qspec import qspec
-from .t1 import t1
+from .t1 import t1, t1_demo
 from .ssf import ssf
 from .resstarkspec import resstarkspec
 from .starkspec import starkspec

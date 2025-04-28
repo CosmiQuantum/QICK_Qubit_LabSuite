@@ -6,7 +6,7 @@ from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_stark_simple
 from .shot_tools import process_shots
-from .stark_tools import gain2freq_detuning
+from .stark_tools import gain2freq_Duffing
 
 class starkspec:
 
@@ -67,12 +67,13 @@ class starkspec:
 
     def gain2freq(self, gains):
         steps = int(len(gains)/2)
-        gains_pos_detuning = gains[steps:]
-        gains_neg_detuning = gains[:steps]
+        gains_pos_detuning = gains[steps:] ## Second half of gains are positively detuned
+        gains_neg_detuning = gains[:steps] ## First half of gains are negatively detuned
 
-        freq_posneg = gain2freq_detuning(gains_pos_detuning, gains_neg_detuning, self.duffing_constant, self.anharmonicity, self.detuning)
+        freq_pos = gain2freq_Duffing(gains_neg_detuning, self.duffing_constant, self.anharmonicity, -1*self.detuning)
+        freq_neg = gain2freq_Duffing(gains_neg_detuning, self.duffing_constant, self.anharmonicity, self.detuning)
 
-        freqs = np.concatenate(freq_posneg)
+        freqs = np.concatenate( (freq_pos,freq_neg) )
         return freqs
 
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):

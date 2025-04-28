@@ -2,7 +2,7 @@ import numpy as np
 
 def gain2freq_resonator(gain, stark_constant):
     ## Return the frequency shift due to [resonator] Stark effect at the given gain(s)
-    return np.square(gains) * stark_constant
+    return np.square(gain) * stark_constant
 
 def gain2freq_Duffing(gain, duffing_constant, anharmonicity, detuning):
     ## Return the frequency shift due to [constant detuning] Stark effect at the given gains(s)

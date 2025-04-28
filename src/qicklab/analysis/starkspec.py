@@ -70,7 +70,7 @@ class starkspec:
         gains_pos_detuning = gains[steps:] ## Second half of gains are positively detuned
         gains_neg_detuning = gains[:steps] ## First half of gains are negatively detuned
 
-        freq_pos = gain2freq_Duffing(gains_neg_detuning, self.duffing_constant, self.anharmonicity, -1*self.detuning)
+        freq_pos = gain2freq_Duffing(gains_pos_detuning, self.duffing_constant, self.anharmonicity, -1*self.detuning)
         freq_neg = gain2freq_Duffing(gains_neg_detuning, self.duffing_constant, self.anharmonicity, self.detuning)
 
         freqs = np.concatenate( (freq_pos,freq_neg) )

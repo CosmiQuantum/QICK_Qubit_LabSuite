@@ -1,6 +1,6 @@
 # QICK_Qubit_LabSuite
 
-The qubit analysis and data acquisition codebase for the CosmiQuantum group at Fermilab. Specifically for qubit operations at the NEXUS and QUIET cryogenic facilities.
+The qubit analysis and data acquisition codebase for the CosmiQuantum group at Fermilab using the [QICK](https://github.com/openquantumhardware/qick) open source qubit controller. Specifically for qubit operations at the NEXUS and QUIET cryogenic facilities.
 
 Custodians:
 - Olivia Seidel (UT Arlington)

@@ -21,33 +21,42 @@ Usage Example:
 
 import os
 import datetime
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 from scipy.optimize import curve_fit
-from ..utils.file_helpers import create_folder_if_not_exists
 
+from ..utils.ana_utils import max_offset_difference_with_x
+from ..utils.file_utils import create_folder_if_not_exists
+from  .fit_functions import exponential, lorentzian, allan_deviation_model
 
-def exponential(x, a, b, c, d):
-    """
-    Exponential function for curve fitting.
+def fit_t1(signal, delay_times):
+    # Initial guess for parameters: amplitude (a), time shift (b), decay constant (c), baseline (d)
+    q1_a_guess = np.max(signal) - np.min(signal)
+    q1_b_guess = 0
+    q1_c_guess = (delay_times[-1] - delay_times[0]) / 5
+    q1_d_guess = np.min(signal)
+    q1_guess = [q1_a_guess, q1_b_guess, q1_c_guess, q1_d_guess]
 
-    The model is defined as:
-        y = a * exp(- (x - b) / c) + d
+    # Define bounds: T1 (c) must be positive, amplitude (a) can be any value.
+    lower_bounds = [-np.inf, -np.inf, 0, -np.inf]
+    upper_bounds = [np.inf, np.inf, np.inf, np.inf]   # No upper bound on parameters
 
-    Parameters:
-        x (array_like): Independent variable.
-        a (float): Amplitude.
-        b (float): Time shift.
-        c (float): Decay constant (must be > 0).
-        d (float): Baseline offset.
+    # Fit the exponential function to the data
+    q1_popt, q1_pcov = curve_fit(exponential, delay_times, signal,
+        p0=q1_guess, bounds=(lower_bounds, upper_bounds), method='trf', maxfev=10000)
 
-    Returns:
-        array_like: Calculated exponential function values.
-    """
-    return a * np.exp(- (x - b) / c) + d
+    # # Generate the fitted exponential curve
+    # fit_exponential = exponential(delay_times, *q1_popt)
 
+    # Extract T1 (decay constant) and its error
+    T1_est = q1_popt[2]
+    T1_err = np.sqrt(q1_pcov[2][2]) if q1_pcov[2][2] >= 0 else float('inf')
 
-def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
+    return T1_est, T1_err, exponential(delay_times, *q1_popt)
+
+def fit_t1_IQ(I, Q, delay_times, signal='None'):
     """
     Fit an exponential decay curve to I and Q signal data to estimate the T1 decay constant.
 
@@ -91,93 +100,38 @@ def t1_fit(I, Q, delay_times=None, signal='None', return_everything=False):
             signal_data = Q
             plot_sig = 'Q'
 
-    # Initial guess for parameters: amplitude, time shift, decay constant, baseline
-    q1_a_guess = np.max(signal_data) - np.min(signal_data)
-    q1_b_guess = 0
-    q1_c_guess = (delay_times[-1] - delay_times[0]) / 5
-    q1_d_guess = np.min(signal_data)
-    q1_guess = [q1_a_guess, q1_b_guess, q1_c_guess, q1_d_guess]
+    return fit_t1(signal_data, delay_times)
 
-    # Define bounds: T1 (c) must be positive, amplitude (a) can be any value.
-    lower_bounds = [-np.inf, -np.inf, 0, -np.inf]
-    upper_bounds = [np.inf, np.inf, np.inf, np.inf]
+def fit_lorenzian(signal, freqs, freq_q):
+    # Initial guesses for whatever signal channel
+    initial_guess = [freq_q, 1, np.max(signal), np.min(signal)]
 
-    # Fit the exponential function to the data
-    q1_popt, q1_pcov = curve_fit(
-        exponential,
-        delay_times,
-        signal_data,
-        p0=q1_guess,
-        bounds=(lower_bounds, upper_bounds),
-        method='trf',
-        maxfev=10000
-    )
+    # First round of fits (to get rough estimates)
+    params, _ = curve_fit(lorentzian, freqs, signal, p0=initial_guess)
 
-    # Generate the fitted exponential curve
-    fit_exponential = exponential(delay_times, *q1_popt)
+    # Use these fits to refine guesses
+    x_max_diff, max_diff = max_offset_difference_with_x(freqs, signal, params[3])
+    initial_guess = [x_max_diff, 1, np.max(signal), np.min(signal)]
 
-    # Extract T1 (decay constant) and its error
-    T1_est = q1_popt[2]
-    T1_err = np.sqrt(q1_pcov[2][2]) if q1_pcov[2][2] >= 0 else float('inf')
+    # Second (refined) round of fits, this time capturing the covariance matrices
+    params, cov = curve_fit(lorentzian, freqs, signal, p0=initial_guess)
 
-    if return_everything:
-        return fit_exponential, T1_err, T1_est, plot_sig
-    else:
-        return T1_est, T1_err
+    # Create the fitted curves
+    fit = lorentzian(freqs, *params)
 
+    # Calculate errors from the covariance matrices
+    fit_err = np.sqrt(np.diag(cov))[0]
 
-def lorentzian(f, f0, gamma, A, B):
-    """
-    Lorentzian function used for curve fitting.
+    # Extract fitted means and FWHM (assuming params[0] is the mean and params[1] relates to the width)
+    mean = params[0]
+    fwhm = 2 * params[1]
 
-    The model is defined as:
-        L(f) = A * gamma^2 / ((f - f0)^2 + gamma^2) + B
+    # Calculate the amplitude differences from the fitted curves
+    amp_fit = abs(np.max(fit) - np.min(fit))
 
-    Parameters:
-        f (array_like): Frequency values.
-        f0 (float): Center frequency.
-        gamma (float): Half-width at half-maximum (HWHM).
-        A (float): Amplitude scaling factor.
-        B (float): Baseline offset.
+    return mean, fit_err, fwhm, fit, amp_fit
 
-    Returns:
-        array_like: Calculated Lorentzian function values.
-    """
-    return A * gamma ** 2 / ((f - f0) ** 2 + gamma ** 2) + B
-
-
-def max_offset_difference_with_x(x_values, y_values, offset):
-    """
-    Find the x-value corresponding to the maximum average absolute difference from a given offset.
-
-    The function calculates the average absolute difference from the offset for triplets of consecutive y-values
-    and returns the x-value (from the middle point of each triplet) that corresponds to the maximum difference.
-
-    Parameters:
-        x_values (array_like): Array of x-values.
-        y_values (array_like): Array of y-values.
-        offset (float): The offset value to compare against.
-
-    Returns:
-        tuple:
-            corresponding_x: The x-value corresponding to the maximum average difference.
-            max_average_difference: The maximum average absolute difference calculated.
-    """
-    max_average_difference = -1
-    corresponding_x = None
-
-    for i in range(len(y_values) - 2):
-        y_triplet = y_values[i:i + 3]
-        average_difference = sum(abs(y - offset) for y in y_triplet) / 3
-
-        if average_difference > max_average_difference:
-            max_average_difference = average_difference
-            corresponding_x = x_values[i + 1]
-
-    return corresponding_x, max_average_difference
-
-
-def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
+def fit_lorenzian_IQ(I, Q, freqs, metric_freq, signal='None', verbose=False):
     """
     Perform Lorentzian fits on I and Q signals over frequency.
 
@@ -208,41 +162,8 @@ def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
         If an error occurs during the fit, returns a tuple of None values.
     """
     try:
-        # Initial guesses for the parameters of I and Q
-        initial_guess_I = [metric_freq, 1, np.max(I), np.min(I)]
-        initial_guess_Q = [metric_freq, 1, np.max(Q), np.min(Q)]
-
-        # First round of fits to obtain rough estimates
-        params_I, _ = curve_fit(lorentzian, freqs, I, p0=initial_guess_I)
-        params_Q, _ = curve_fit(lorentzian, freqs, Q, p0=initial_guess_Q)
-
-        # Refine the guesses using the maximum offset difference method
-        x_max_diff_I, _ = max_offset_difference_with_x(freqs, I, params_I[3])
-        x_max_diff_Q, _ = max_offset_difference_with_x(freqs, Q, params_Q[3])
-        initial_guess_I = [x_max_diff_I, 1, np.max(I), np.min(I)]
-        initial_guess_Q = [x_max_diff_Q, 1, np.max(Q), np.min(Q)]
-
-        # Second round of fits (refined) capturing covariance matrices
-        params_I, cov_I = curve_fit(lorentzian, freqs, I, p0=initial_guess_I)
-        params_Q, cov_Q = curve_fit(lorentzian, freqs, Q, p0=initial_guess_Q)
-
-        # Create the fitted curves
-        I_fit = lorentzian(freqs, *params_I)
-        Q_fit = lorentzian(freqs, *params_Q)
-
-        # Calculate parameter errors from the covariance matrices
-        fit_err_I = np.sqrt(np.diag(cov_I))
-        fit_err_Q = np.sqrt(np.diag(cov_Q))
-
-        # Extract fitted center frequencies and calculate FWHM
-        mean_I = params_I[0]
-        mean_Q = params_Q[0]
-        fwhm_I = 2 * params_I[1]
-        fwhm_Q = 2 * params_Q[1]
-
-        # Calculate amplitude differences of the fitted curves
-        amp_I_fit = abs(np.max(I_fit) - np.min(I_fit))
-        amp_Q_fit = abs(np.max(Q_fit) - np.min(Q_fit))
+        mean_I, fit_err_I, fwhm_I, I_fit, amp_I_fit = fit_lorenzian(I, freqs, freq_q)
+        mean_Q, fit_err_Q, fwhm_Q, Q_fit, amp_Q_fit = fit_lorenzian(Q, freqs, freq_q)
 
         # Choose which curve to report based on the signal indicator or amplitude difference
         if 'None' in signal:
@@ -263,17 +184,14 @@ def fit_lorenzian(I, Q, freqs, metric_freq, signal='None', verbose=False):
             largest_amp_curve_fwhm = fwhm_Q
             fit_err = fit_err_Q[0]
         else:
-            if verbose:
-                print('Invalid signal passed, please choose "I", "Q", or "None".')
+            if verbose: print('Invalid signal passed, please choose "I", "Q", or "None".')
             return None, None, None, None, None
 
         return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
 
     except Exception as e:
-        if verbose:
-            print("Error during Lorentzian fit:", e)
+        if verbose: print("Error during Lorentzian fit:", e)
         return None, None, None, None, None
-
 
 def get_lorentzian_fits(I, Q, freqs, verbose=False):
     """
@@ -304,13 +222,3 @@ def get_lorentzian_fits(I, Q, freqs, verbose=False):
 
     return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
 
-def allan_deviation_model(tau, h0, h_m1, h_m2, A, tau0):
-    # White noise term: ∝ τ^(-1/2)
-    term_white = np.sqrt(h0 / 2) * tau**(-0.5)
-    # Flicker noise (1/ƒ noise) term: constant with τ
-    term_flicker = np.sqrt(2 * np.log(2) * h_m1)
-    # Random walk noise term: ∝ τ^(1/2)
-    term_randomwalk = np.sqrt((4 * np.pi**2 / 6) * h_m2) * tau**0.5
-    # Lorentzian noise term (exponentially correlated noise)
-    term_lorentz = np.sqrt(A * tau0 / tau * (4 * np.exp(-tau/tau0) - np.exp(-2*tau/tau0) - 3 + 2*tau/tau0))
-    return term_white + term_flicker + term_randomwalk + term_lorentz

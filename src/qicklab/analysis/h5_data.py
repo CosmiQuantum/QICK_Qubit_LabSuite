@@ -13,323 +13,66 @@ Usage:
     load_and_process_all_data, and others as needed.
 """
 
-import ast, datetime, glob, os, re, h5py
+import time, datetime
+import os, glob, re
+import h5py
+import ast
+
 import numpy as np
-from .plotting import *
-from .fitting import *
-import time
+
+from ..utils.data_utils import ensure_str, unwrap_singleton_list
+from .plot_tools import *
+from .fit_tools import *
 
 
-# ------------------ Data Conversion and Dataset Creation ------------------
+def mask_gain_res(QUBIT_INDEX, IndexGain = 1, num_qubits=6):
+    """Sets the gain for the selected qubit to 1, others to 0."""
+    filtered_gain_ge = [0] * num_qubits  # Initialize all gains to 0
+    if 0 <= QUBIT_INDEX < num_qubits: #makes sure you are within the range of options
+        filtered_gain_ge[QUBIT_INDEX] = IndexGain  # Set the gain for the selected qubit
+    return filtered_gain_ge
 
-def convert_non_floats_to_strings(data_list):
+def extract_resonator_frequencies(data, process_offset=False, offsets=None):
     """
-    Convert non-numeric items in a list to strings.
+    Extracts the resonance frequencies for each qubit based on the provided data.
 
-    Parameters:
-        data_list (list): A list of items.
+    Parameters
+    ----------
+    data : dict
+        Dictionary where each key is a qubit index (0 means qubit 1) and each value is a tuple or list
+        containing the x_data and y_data arrays for that qubit.
+        keys are qubit indices (0 means qubit 1) and values are (x_data, y_data)
+    process_offset : bool, optional
+        If True, each qubit's x_data is shifted by an offset provided in the offsets dictionary.
+    offsets : dict, optional
+        Dictionary of offset frequencies to add to each qubit's x_data (keys must match those in data)
+        when process_offset is True.
+        keys matching those in data, with offset frequency values
 
-    Returns:
-        list: A list where each item that is not an int, float, or np.float64
-              is converted to a string.
+    Returns
+    -------
+    dict
+        Dictionary where each key is a qubit index and each value is the computed resonance frequency
+        (x value corresponding to the minimum y value), rounded to 4 decimals.
     """
-    # Check each element's type and convert non-floats to string.
-    return [str(x) if not isinstance(x, (int, float, np.float64)) else x for x in data_list]
+    res_freqs = {}
+    for qkey, (x_vals, y_vals) in data.items():
+        x_vals = np.array(x_vals)
+        y_vals = np.array(y_vals)
 
+        # Apply offset if required.
+        if process_offset:
+            if offsets is None or qkey not in offsets:
+                raise ValueError(
+                    "Offsets must be provided as a dict with keys matching those in data when process_offset is True.")
+            x_vals = x_vals + offsets[qkey]
 
-def create_dataset(name, value, group):
-    """
-    Create a dataset within an HDF5 group based on the given name and value.
+        # Compute the resonance frequency: x value at the minimum y value.
+        min_index = np.argmin(y_vals)
+        res_freq = x_vals[min_index]
+        res_freqs[qkey] = round(res_freq, 4)
 
-    The function handles different cases:
-      - If the dataset is named "Dates", it attempts to convert the value to a float64 array.
-      - If the value is a list and its first element indicates 'None', an empty array is created.
-      - Otherwise, it first attempts to convert non-floats to strings and then convert
-        to a float64 array. If that fails, it converts the value to a string array.
-      - If value is None, an empty dataset is created.
-
-    Parameters:
-        name (str): Name of the dataset.
-        value (any): The data to store.
-        group (h5py.Group): The HDF5 group in which to create the dataset.
-    """
-    if value is not None:
-        if name == "Dates":
-            try:
-                value = np.array(value, dtype=np.float64)
-            except ValueError:
-                value = np.array(value, dtype='S')
-        elif isinstance(value, list) and 'None' in str(value[0]):
-            # If the list appears to represent None values, store an empty array.
-            value = np.array([])
-        else:
-            try:
-                # Convert any non-numeric entries to strings, then to float64.
-                value = convert_non_floats_to_strings(value)
-                value = np.array(value, dtype=np.float64)
-            except ValueError:
-                # If conversion to float fails, store as a string array.
-                value = np.array(value, dtype='S')
-        group.create_dataset(name, data=value)
-    else:
-        # Create an empty dataset if no value is provided.
-        group.create_dataset(name, data=np.array([]))
-
-
-def save_to_h5(data, outer_folder_expt, data_type, batch_num, save_r):
-    """
-    Save data to an HDF5 file with a timestamped filename.
-
-    The function creates the destination folder if it does not exist. It generates a filename
-    containing the current date/time, data type, batch number, and a replication factor. It then
-    iterates over the provided data (organized per qubit) and saves each dataset within its respective
-    group.
-
-    Parameters:
-        data (dict): Nested dictionary where each key corresponds to a qubit index and the value is a 
-                     dictionary of dataset names and data.
-        outer_folder_expt (str): Path to the folder where the HDF5 file should be saved.
-        data_type (str): A descriptor for the type of data (used in filename and attributes).
-        batch_num (int or str): Batch number to include in the filename and file attributes.
-        save_r (int or str): Replication factor for the number of items per batch (included in filename and attributes).
-    """
-    # Ensure the output directory exists.
-    os.makedirs(outer_folder_expt, exist_ok=True)
-    # Create a formatted datetime string for uniqueness.
-    formatted_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # Construct the filename with provided parameters.
-    h5_filename = os.path.join(outer_folder_expt,
-                               f"{formatted_datetime}_{data_type}_results_batch_{batch_num}_Num_per_batch{save_r}.h5")
-
-    # Write the data to the HDF5 file.
-    with h5py.File(h5_filename, 'w') as f:
-        # Store file-level attributes.
-        f.attrs['datestr'] = formatted_datetime
-        f.attrs[f'{data_type}_results_batch'] = batch_num
-        f.attrs['num_per_batch'] = save_r
-        # Iterate over each qubit's data.
-        for QubitIndex, qubit_data in data.items():
-            # Create a group for each qubit (named Q1, Q2, etc.)
-            group = f.create_group(f'Q{QubitIndex + 1}')
-            # Create datasets within the qubit group.
-            for key, value in qubit_data.items():
-                create_dataset(key, value, group)
-
-
-def print_h5_contents(filename):
-    """
-    Print the contents of an HDF5 file including file attributes and dataset values.
-
-    For each group in the file, the function prints the dataset names and, if the dataset is large,
-    only prints a sample of the data.
-
-    Parameters:
-        filename (str): Path to the HDF5 file.
-    """
-    try:
-        with h5py.File(filename, 'r') as f:
-            print("File Attributes:")
-            # Print each file-level attribute.
-            for key, value in f.attrs.items():
-                print(f"  {key}: {value}")
-            print("\nDataset Contents:")
-            # Iterate over each group in the file.
-            for key in f.keys():
-                group = f[key]
-                print(f"\nGroup: {key}")
-                # Iterate over each dataset in the group.
-                for dataset_name in group.keys():
-                    dataset = group[dataset_name]
-                    try:
-                        data = dataset[()]
-                        print(f"  Dataset: {dataset_name}")
-                        # If the dataset is large, only show a sample.
-                        if isinstance(data, np.ndarray) and data.size > 100:
-                            print(f"    Data (sample): {data[:50]} ... (truncated)")
-                        else:
-                            print(f"    Data: {data}")
-                    except Exception:
-                        print("    Data: Could not print data")
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-def unwrap_singleton_list(val):
-    """
-    If val is a list containing exactly one element that is also a list,
-    return that inner list. Otherwise, return val unchanged.
-    """
-    if isinstance(val, list) and len(val) == 1 and isinstance(val[0], list):
-        return val[0]
-    return val
-
-def load_from_h5(filename, data_type, save_r=1):
-    """
-    Load data from an HDF5 file and replicate each dataset value a specified number of times.
-
-    The function reads each group (assumed to represent a qubit) and for every dataset within,
-    it replicates the read value save_r times in a list.
-
-    Parameters:
-        filename (str): Path to the HDF5 file.
-        data_type (str): A key to wrap the loaded data under.
-        save_r (int, optional): Number of times to replicate each loaded dataset. Defaults to 1.
-
-    Returns:
-        dict: Nested dictionary with structure:
-              { data_type: { qubit_index: { dataset_name: [data]*save_r, ... }, ... } }
-    """
-    data = {data_type: {}}
-    with h5py.File(filename, 'r') as f:
-        for qubit_group in f.keys():
-            # Convert group name (e.g., "Q1") to a zero-based index.
-            qubit_index = int(qubit_group[1:]) - 1
-            qubit_data = {}
-            group = f[qubit_group]
-            for dataset_name in group.keys():
-                # Read the dataset value and replicate it save_r times.
-                replicated = [group[dataset_name][()]] * save_r
-                qubit_data[dataset_name] = unwrap_singleton_list(replicated)
-            data[data_type][qubit_index] = qubit_data
-    return data
-
-
-def roll(data: np.ndarray) -> np.ndarray:
-    """
-    Smooth a 1D numpy array using a simple moving average filter with a window size of 5.
-
-    The function computes the convolution of the data with a uniform kernel. It then pads the smoothed 
-    data to maintain the original length.
-
-    Parameters:
-        data (np.ndarray): 1D array of numerical data.
-
-    Returns:
-        np.ndarray: Smoothed array with the same length as the input.
-    """
-    # Create a simple averaging kernel of size 5.
-    kernel = np.ones(5) / 5
-    # Convolve the input data with the kernel.
-    smoothed = np.convolve(data, kernel, mode='valid')
-    # Calculate the padding size required to match the original length.
-    pad_size = (len(data) - len(smoothed)) // 2
-    # Concatenate the unprocessed beginning and end segments with the smoothed data.
-    return np.concatenate((data[:pad_size], smoothed, data[-pad_size:]))
-
-
-# ------------------ Helper Functions for Data Processing ------------------
-
-def ensure_str(x):
-    """
-    Decode byte arrays or bytes objects into Python strings.
-
-    If the decoded string (or strings in an array) equals "None" (after stripping whitespace),
-    return None (or a list with None values). Otherwise, return the decoded value.
-
-    Parameters:
-        x (bytes, np.ndarray, or str): The input value to decode.
-
-    Returns:
-        str, None, or list: The decoded string or list of strings, or None if the string equals "None".
-    """
-    # Handle numpy arrays of byte strings.
-    if isinstance(x, np.ndarray) and x.dtype.kind == 'S':
-        if x.size == 1:
-            s = x.item().decode()
-            return None if s.strip() == "None" else s
-        else:
-            decoded = [s.decode() for s in x]
-            return [None if s.strip() == "None" else s for s in decoded]
-    # Handle individual bytes objects.
-    elif isinstance(x, bytes):
-        s = x.decode()
-        return None if s.strip() == "None" else s
-    elif isinstance(x, str):
-        return None if x.strip() == "None" else x
-    return x
-
-
-def process_h5_data(data):
-    """
-    Process a string containing numeric data by filtering out unwanted characters.
-
-    The function removes newline characters and keeps only digits, minus signs, dots, spaces, and the letter 'e'
-    (for exponential notation), then converts the resulting tokens to floats.
-
-    Parameters:
-        data (str): String containing numeric data.
-
-    Returns:
-        list: A list of floats extracted from the string.
-    """
-    # Replace newline characters with a space.
-    data = data.replace('\n', ' ')
-    # Keep only valid numeric characters.
-    cleaned_data = ''.join(c for c in data if c.isdigit() or c in ['-', '.', ' ', 'e'])
-    # Split the cleaned string and convert each part to float.
-    numbers = [float(x) for x in cleaned_data.split() if x]
-    return numbers
-
-
-def process_string_of_nested_lists(data):
-    """
-    Convert a string representing nested lists of numbers into a list of lists of floats.
-
-    The function cleans the string by removing newline characters and extra whitespace,
-    then uses regular expressions to extract the nested lists.
-
-    Parameters:
-        data (str): String representing nested lists (e.g., "[[1.0, 2.0], [3.0, 4.0]]").
-
-    Returns:
-        list: A list of lists of floats.
-    """
-    # Remove newline characters.
-    data = data.replace('\n', '')
-    # Remove extra whitespace within the brackets.
-    data = re.sub(r'\s*\[(\s*.*?\s*)\]\s*', r'[\1]', data)
-    data = data.replace('[ ', '[').replace('[ ', '[').replace('[ ', '[')
-    # Keep only allowed characters.
-    cleaned_data = ''.join(c for c in data if c.isdigit() or c in ['-', '.', ' ', 'e', '[', ']'])
-    # Pattern to match content within square brackets.
-    pattern = r'\[(.*?)\]'
-    matches = re.findall(pattern, cleaned_data)
-    result = []
-    for match in matches:
-        try:
-            # Convert space-separated numbers to floats.
-            numbers = [float(x.strip('[]').replace("'", "").replace("  ", ""))
-                       for x in match.split() if x]
-        except Exception as e:
-            print("Error parsing nested list:", e)
-            numbers = []
-        result.append(numbers)
-    return result
-
-
-def string_to_float_list(input_string):
-    """
-    Convert a string representation of a list into an actual list of floats.
-
-    The function cleans the string by removing occurrences of 'np.float64' and then uses ast.literal_eval
-    for safe evaluation.
-
-    Parameters:
-        input_string (str): String representation of a list (e.g., "[1, 2, 3]").
-
-    Returns:
-        list or None: A list of floats if successful, otherwise None.
-    """
-    try:
-        # Remove 'np.float64(' and ')' from the string.
-        cleaned_string = input_string.replace('np.float64(', '').replace(')', '')
-        # Safely evaluate the string into a Python list.
-        float_list = ast.literal_eval(cleaned_string)
-        return [float(x) for x in float_list]
-    except Exception as e:
-        print("Error: Invalid input string format. It should be a string representation of a list of numbers.", e)
-        return None
+    return res_freqs
 
 
 def process_freq_pts(data):
@@ -390,30 +133,6 @@ def process_config(x):
             return x
 
 
-def is_numeric_string(s):
-    """
-    Check if a string can be converted to a float.
-
-    Parameters:
-        s (str): The string to check.
-
-    Returns:
-        bool: True if the string is numeric, False otherwise.
-    """
-    try:
-        float(s)
-        return True
-    except Exception:
-        return False
-
-def safe_convert_timestamp(ts):
-    try:
-        # If ts is NaN, return None instead of trying to convert it.
-        if np.isnan(ts):
-            return None
-        return datetime.datetime.fromtimestamp(ts)
-    except Exception:
-        return None
 # ------------------ Process Map and Safe Globals ------------------
 
 # safe_globals provides a restricted evaluation context for configuration strings.
@@ -526,25 +245,7 @@ def get_data_for_key(loaded_data, key, qubit_index=None):
                 result[q_index] = data[key]
         return result
 
-def get_h5_files_in_dirs(folder_paths):
-    """
-    Get the pathnames of all .h5 files in the given list of directories.
-
-    Parameters:
-        folder_paths (list of str): A list of directory paths to search.
-
-    Returns:
-        list: A list of full pathnames of .h5 files found in all directories.
-    """
-    h5_files = []
-    for folder_path in folder_paths:
-        h5_files.extend(glob.glob(os.path.join(folder_path, "*.h5")))
-    return h5_files
-
-
-def get_res_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
-                        plot_title_prefix="", save_figs=False, outer_folder=None,
-                        expt_name=None, round_num=None, fig_quality=50):
+def get_res_freqs_and_dates(number_of_qubits, filepaths, verbose=False, plot_title_prefix="", save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=50):
     all_q_min_res_freqs = {i: [] for i in range(number_of_qubits)}
     all_q_res_freqs_time = {i: [] for i in range(number_of_qubits)}
 
@@ -587,9 +288,7 @@ def get_res_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
     #return dict with all qubits and a list of the frequencies for the resonator for that qubit and measurement times
     return all_q_min_res_freqs, all_q_res_freqs_time
 
-def get_ss_info_and_dates(number_of_qubits, filepaths, verbose=False,
-                        plot_title_prefix="", save_figs=False, outer_folder=None,
-                        expt_name=None, round_num=None, fig_quality=50):
+def get_ss_info_and_dates(number_of_qubits, filepaths, verbose=False, plot_title_prefix="", save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=50):
     fidelities = {i: [] for i in range(number_of_qubits)}
     thresholds = {i: [] for i in range(number_of_qubits)}
     angles = {i: [] for i in range(number_of_qubits)}
@@ -630,9 +329,7 @@ def get_ss_info_and_dates(number_of_qubits, filepaths, verbose=False,
     #return dict with all qubits and a list of the frequencies for the resonator for that qubit and measurement times
     return fidelities, angles, thresholds, date_times
 
-def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
-                        plot_title_prefix="", save_figs=False, outer_folder=None,
-                        expt_name=None, round_num=None, fig_quality=50, fit_err_threshold=0):
+def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False, plot_title_prefix="", save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=50, fit_err_threshold=0):
     """
     Processes data files to extract spectroscopy frequencies, fitting errors, and dates.
 
@@ -710,12 +407,7 @@ def get_freqs_and_dates(number_of_qubits, filepaths, verbose=False,
 
     return frequencies, fit_errs, date_times
 
-
-def get_decoherence_time_and_dates(number_of_qubits, filepaths, decoherence_type='T1',
-                                   discard_values_over=None, fit_err_threshold=0,
-                                   save_figs=False, outer_folder=None, expt_name=None,
-                                   round_num=None, fig_quality=100, plot_title_prefix="",
-                                   thresholding=False, discard_low_signal_values = True):
+def get_decoherence_time_and_dates(number_of_qubits, filepaths, decoherence_type='T1', discard_values_over=None, fit_err_threshold=0, save_figs=False, outer_folder=None, expt_name=None, round_num=None, fig_quality=100, plot_title_prefix="", thresholding=False, discard_low_signal_values = True):
     """
     Processes data files to extract T1 decay constants (decoherence times), fit errors, and dates.
 

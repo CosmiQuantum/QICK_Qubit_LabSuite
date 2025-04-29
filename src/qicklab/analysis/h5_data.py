@@ -21,8 +21,8 @@ import ast
 import numpy as np
 
 from ..utils.data_utils import ensure_str, unwrap_singleton_list
-from .plotting import *
-from .fitting import *
+from .plot_tools import *
+from .fit_tools import *
 
 
 def mask_gain_res(QUBIT_INDEX, IndexGain = 1, num_qubits=6):

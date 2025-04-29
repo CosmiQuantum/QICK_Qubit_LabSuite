@@ -6,6 +6,13 @@ ana_utils.py
 
 import numpy as np
 
+def rotate_and_threshold(Ivals, Qvals, theta, threshold):
+    i_new = Ivals * np.cos(theta) - Qvals * np.sin(theta)
+    q_new = Ivals * np.sin(theta) + Qvals * np.cos(theta)
+
+    states = (i_new > threshold)
+    return i_new, q_new, states
+
 def roll(data: np.ndarray) -> np.ndarray:
     """
     Smooth a 1D numpy array using a simple moving average filter with a window size of 5.

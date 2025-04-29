@@ -1,16 +1,15 @@
-import os, sys
-import re
-import datetime
-import h5py
-
+import os, datetime
 import numpy as np
-import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
 
 from .fit_functions import exponential
+from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
+from .plot_tools import plot_shots, plot_t1_simple
+from .fit_tools import fit_t1
+from .shot_tools import process_shots
 
 class t1:
 
@@ -49,98 +48,33 @@ class t1:
         return dates, n, delay_times, steps, reps, I_shots, Q_shots
 
     def plot_shots(self, I_shots, Q_shots, delay_times, n, round=0, idx=10):
-        print(np.shape(I_shots))
+        # print(np.shape(I_shots))
 
         this_I = I_shots[round][:,idx]
         this_Q = Q_shots[round][:,idx]
 
-        print(np.shape(this_I))
+        # print(np.shape(this_I))
 
-        i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
-        q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
+        i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
 
-        states = (i_new > self.threshold)
+        title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
+                 f'rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
 
-        fig, ax = plt.subplots()
-        ax.scatter(i_new, q_new, c=states)
-        ax.set_xlabel('I [a.u.]')
-        ax.set_ylabel('Q [a.u.]')
-        ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
-        #plt.show(block=False)
+        _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
-
-        p_excited = []
-        for round in np.arange(n):
-            p_excited_in_round = []
-            for idx in np.arange(steps):
-                this_I = I_shots[round][:, idx]
-                this_Q = Q_shots[round][:, idx]
-
-                i_new = this_I * np.cos(self.theta) - this_Q * np.sin(self.theta)
-                q_new = this_I * np.sin(self.theta) + this_Q * np.cos(self.theta)
-                if self.thresholding:
-                    states = (i_new > self.threshold)
-                else:
-                    states = np.mean(i_new)
-                p_excited_in_round.append(np.mean(states))
-
-            p_excited.append(p_excited_in_round)
-
-        return p_excited
+        return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
 
     def t1_fit(self, signal, delay_times, round, n, plot=False):
-        ## >TO DO< Replace this (or integrate) with fitting.t1_fit
-        # Initial guess for parameters
-        q1_a_guess = np.max(signal) - np.min(signal)  # Initial guess for amplitude (a)
-        q1_b_guess = 0  # Initial guess for time shift (b)
-        q1_c_guess = (delay_times[-1] - delay_times[0]) / 5  # Initial guess for decay constant (T1)
-        q1_d_guess = np.min(signal)  # Initial guess for baseline (d)
 
-        # Form the guess array
-        q1_guess = [q1_a_guess, q1_b_guess, q1_c_guess, q1_d_guess]
+        T1_est, T1_err, q1_fit_exponential = fit_t1(signal, delay_times)
 
-        # Define bounds to constrain T1 (c) to be positive, but allow amplitude (a) to be negative
-        lower_bounds = [-np.inf, -np.inf, 0, -np.inf]  # Amplitude (a) can be negative/positive, but T1 (c) > 0
-        upper_bounds = [np.inf, np.inf, np.inf, np.inf]  # No upper bound on parameters
+        title = (f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: ' +
+                 f't1_ge = {T1_est:.3f} +/- {T1_err} us')
 
-        # Perform the fit using the 'trf' method with bounds
-        q1_popt, q1_pcov = curve_fit(exponential, delay_times, signal,
-                                     p0=q1_guess, bounds=(lower_bounds, upper_bounds),
-                                     method='trf', maxfev=10000)
-
-        # Generate the fitted exponential curve
-        q1_fit_exponential = exponential(delay_times, *q1_popt)
-
-        # Extract T1 and its error
-        T1_est = q1_popt[2]  # Decay constant T1
-        T1_err = np.sqrt(q1_pcov[2][2]) if q1_pcov[2][2] >= 0 else float('inf')  # Ensure error is valid
-
-        if plot:
-            fig, ax = plt.subplots()
-            ax.plot(delay_times, signal, label='data')
-            ax.plot(delay_times, q1_fit_exponential, label='exponential')
-            ax.set_xlabel('Delay Time [us]')
-            ax.set_ylabel('P(e)')
-            ax.legend()
-            ax.set_title(f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: t1_ge = {T1_est:.3f} +/- {T1_err} us')
-            #plt.show(block=False)
-
-
+        if plot: plot_t1_simple(signal, delay_times, q1_fit_exponential, title=title)
+            
         return q1_fit_exponential, T1_err, T1_est
-
-    def get_all_t1(self, delay_times, p_excited, n):
-
-        t1s = []
-        t1_errs = []
-
-        for round in np.arange(n):
-            p_excited_in_round = p_excited[round][:]
-            q1_fit_exponential, T1_err, T1_est = self.t1_fit(p_excited_in_round, delay_times, round, n, plot=False)
-            t1s.append(T1_est)
-            t1_errs.append(T1_err)
-
-        return t1s, t1_errs
 
     def get_t1_in_round(self, delay_times, p_excited, n, round, plot=True):
         p_excited_in_round = p_excited[round][:]
@@ -148,3 +82,25 @@ class t1:
 
         return q1_fit_exponential, T1_err, T1_est
 
+    def get_all_t1(self, delay_times, p_excited, n, plot_idxs=[]):
+
+        t1s = np.zeros(n) #[]
+        t1_errs = np.zeros(n) #[]
+
+        for round in np.arange(n):
+            _, t1_errs[round], t1s[round] = self.get_t1_in_round(delay_times, p_excited, n, round, plot=(round in plot_idxs))
+
+        return t1s.tolist(), t1_errs.tolist()
+
+
+def t1_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, threshold=-1285.08904, theta=0.17681, selected_round=[10, 73]):
+    # selected_round = [10, 73]
+    # threshold = 0 #overwritten when get_threshold flag is set to True
+    # theta = 0 #overwritten when get_threshold flag is set to True
+
+    t1_ge = t1(data_dir, dataset, QubitIndex, theta, threshold)
+    t1_dates, t1_n, delay_times, t1_steps, t1_reps, t1_I_shots, t1_Q_shots = t1_ge.load_all()
+    t1_p_excited = t1_ge.process_shots(t1_I_shots, t1_Q_shots, t1_n, t1_steps)
+    t1s, t1_errs = t1_ge.get_all_t1(delay_times, t1_p_excited, t1_n, plot_idxs=selected_round)
+
+    return t1_dates, t1s, t1_errs

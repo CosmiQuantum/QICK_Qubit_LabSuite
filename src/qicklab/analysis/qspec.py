@@ -3,9 +3,9 @@ import numpy as np
 
 from scipy.optimize import curve_fit
 
+## QICKLAB methods
 from ..datahandling.datafile_tools import load_h5_data
 from ..utils.data_utils import process_h5_data
-# from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_qspec_simple
 from .fit_tools import fit_lorenzian
 

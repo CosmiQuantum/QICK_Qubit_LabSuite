@@ -1,9 +1,10 @@
 import os, datetime
 import numpy as np
 
+from ..datahandling.datafile_tools import load_h5_data
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
+# from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_stark_simple
 from .shot_tools import process_shots
 from .stark_tools import gain2freq_Duffing
@@ -34,13 +35,13 @@ class starkspec:
         Q_shots = []
         P = []
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
+        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
         reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
 
         for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['starkSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_shots.append(np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape(

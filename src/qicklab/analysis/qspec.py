@@ -3,8 +3,9 @@ import numpy as np
 
 from scipy.optimize import curve_fit
 
+from ..datahandling.datafile_tools import load_h5_data
 from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
+# from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_qspec_simple
 from .fit_tools import fit_lorenzian
 
@@ -26,11 +27,11 @@ class qspec:
         I = []
         Q = []
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
+        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
         qspec_probe_freqs = process_h5_data(load_data['QSpec'][self.QubitIndex].get('Frequencies', [])[0][0].decode())
 
         for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['QSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))

@@ -10,7 +10,8 @@ from sklearn.cluster import KMeans
 
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
+from ..datahandling.datafile_tools import load_h5_data
+# from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_shots
 
 class auto_threshold:
@@ -26,7 +27,7 @@ class auto_threshold:
         h5_files = os.listdir(data_path)
         h5_files.sort()
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
+        load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
         step_idx = int(steps/2)

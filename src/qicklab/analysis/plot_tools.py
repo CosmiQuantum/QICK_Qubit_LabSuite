@@ -43,6 +43,7 @@ from ..utils.ana_utils import split_into_continuous_segments, get_longest_contin
 from ..utils.data_utils import remove_none_values
 from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import convert_datetimes_to_seconds
+from ..datahandling.datafile_tools import DATETIME_FMT
 from  .fit_functions import allan_deviation_model
 
 def plot_shots(Ivals, Qvals, states, rotated=False, title=None, ax=None):
@@ -242,7 +243,7 @@ def plot_ssf_histogram(ig, qg, ie, qe, cfg, outerFolder=None, qubit_index=0, rou
             outerFolder_expt = os.path.join(outerFolder_expt, "Q" + str(qubit_index + 1))
             create_folder_if_not_exists(outerFolder_expt)
             now = datetime.datetime.now()
-            formatted_datetime = now.strftime("%Y-%m-%d_%H-%M-%S")
+            formatted_datetime = now.strftime(DATETIME_FMT)
             file_name = os.path.join(outerFolder_expt,
                                      f"R_{round_num}_Q_{qubit_index + 1}_{formatted_datetime}_{expt_name}.png")
             if fig_filename is not None:
@@ -638,7 +639,7 @@ def plot_spectroscopy(qubit_index, fpts, fcenter, amps, round_num=0, config=None
             if not os.path.exists(outerFolder_expt):
                 os.makedirs(outerFolder_expt)
             now = datetime.datetime.now()
-            formatted_datetime = now.strftime("%Y-%m-%d_%H-%M-%S")
+            formatted_datetime = now.strftime(DATETIME_FMT)
             # File name incorporates the round number and qubit_index.
             file_name = os.path.join(outerFolder_expt,
                                      f"R_{round_num}_Q_{qubit_index + 1}_{formatted_datetime}_{expt_name}.png")

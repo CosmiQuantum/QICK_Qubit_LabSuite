@@ -53,7 +53,7 @@ def find_h5_files(basepath, dataset, expt_name, folder="study_data", verbose=Fal
     if verbose:
         print(data_path)
         for f in h5_files: print("",f)
-    return h5_files, len(h5_files)
+    return h5_files, data_path, len(h5_files)
 
 def load_h5_data(filename, data_type, save_r=1):
     """

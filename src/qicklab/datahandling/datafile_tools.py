@@ -47,9 +47,12 @@ def save_to_h5(data, outer_folder_expt, data_type, batch_num, save_r):
             for key, value in qubit_data.items():
                 create_h5_dataset(key, value, group)
 
-def find_h5_files(basepath, dataset, expt_name, folder="study_data"):
+def find_h5_files(basepath, dataset, expt_name, folder="study_data", verbose=False):
     data_path = os.path.join(basepath, dataset, folder, "Data_h5", expt_name)
     h5_files = os.listdir(data_path).sort()
+    if verbose:
+        print(data_path)
+        for f in h5_files: print("",f)
     return h5_files, len(h5_files)
 
 def load_h5_data(filename, data_type, save_r=1):

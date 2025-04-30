@@ -9,9 +9,8 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 
 ## QICKLAB methods
-from ..datahandling.datafile_tools import load_h5_data
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data
 from ..utils.ana_utils  import rotate_and_threshold
-from ..utils.data_utils import process_h5_data
 from .plot_tools import plot_shots
 
 class auto_threshold:
@@ -23,9 +22,10 @@ class auto_threshold:
         self.folder = folder
 
     def load_sample(self, idx=0):
-        data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
-        h5_files.sort()
+        h5_files, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
+        # data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
+        # h5_files = os.listdir(data_path)
+        # h5_files.sort()
 
         load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())

@@ -3,9 +3,8 @@ import os, datetime
 import numpy as np
 
 ## QICKLAB methods
-from ..datahandling.datafile_tools import load_h5_data
+from ..datahandling.datafile_tools import load_h5_data, process_h5_data
 from ..utils.ana_utils  import rotate_and_threshold
-from ..utils.data_utils import process_h5_data
 
 class ssf:
     def __init__(self,data_dir, dataset, QubitIndex, folder="study_data", expt_name ="ss_ge"):

@@ -1,4 +1,6 @@
 ## Note: these are specific to a data format and probably don't belong here
+import os, h5py
+import numpy as np
 
 from ..utils.file_utils import create_h5_dataset
 from ..utils.data_utils import unwrap_singleton_list

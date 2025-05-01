@@ -7,6 +7,7 @@ from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_qspec_simple
 from .fit_tools import fit_lorenzian
+from .data_tools import get_h5_for_qubit
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):
@@ -18,7 +19,8 @@ class qspec:
 
     def load_all(self):
         data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
+        h5_files_all_qubits = os.listdir(data_path)
+        h5_files = get_h5_for_qubit(data_path, h5_files_all_qubits, self.QubitIndex, 'QSpec')
         h5_files.sort()
         n = len(h5_files)
 

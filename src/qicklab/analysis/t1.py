@@ -25,7 +25,8 @@ class t1:
 
     def load_all(self):
         data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
+        h5_files_all_qubits = os.listdir(data_path)
+        h5_files = get_h5_for_qubit(data_path, h5_files_all_qubits, self.QubitIndex, 'T1')
         h5_files.sort()
         n = len(h5_files)
 

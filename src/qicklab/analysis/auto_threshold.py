@@ -36,6 +36,22 @@ class auto_threshold:
 
         return I_shots[step_idx], Q_shots[step_idx]
 
+    def load_ssf_sample(self, idx=0, ssf_folder="optimization", ssf_expt_name=""):
+        data_path = os.path.join(self.data_dir, self.dataset, ssf_folder, "Data_h5", ssf_expt_name)
+        h5_files = os.listdir(data_path)
+        h5_files.sort()
+
+        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'SS', save_r=1)
+
+
+        I_g = process_h5_data(load_data['SS'][self.QubitIndex].get('I_g', [])[0][0].decode())
+        Q_g.append(process_h5_data(load_data['SS'][self.QubitIndex].get('Q_g', [])[0][0].decode()))
+        I_e.append(process_h5_data(load_data['SS'][self.QubitIndex].get('I_e', [])[0][0].decode()))
+        Q_e.append(process_h5_data(load_data['SS'][self.QubitIndex].get('Q_e', [])[0][0].decode()))
+        fid.append(load_data['SS'][self.QubitIndex].get('Fidelity', [])[0])
+        theta.append(load_data['SS'][self.QubitIndex].get('Angle', [])[0])
+
+
     def get_threshold(self, I_shots, Q_shots, plot=True, verbose=False):
         ## Setup and evaluate the clustering algorithm to find the unrotated centroids
         kmeans = KMeans(n_clusters=2).fit(np.transpose([I_shots, Q_shots]))

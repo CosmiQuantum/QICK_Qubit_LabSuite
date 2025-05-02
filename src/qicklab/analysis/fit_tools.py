@@ -27,9 +27,10 @@ import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
 
+#from scripts.analysis_comprehensive_TLS_v0 import qspec_Q
 from ..utils.ana_utils import max_offset_difference_with_x
 from ..utils.file_utils import create_folder_if_not_exists
-from  .fit_functions import exponential, lorentzian, allan_deviation_model
+from  .fit_functions import exponential, lorentzian, cosine, allan_deviation_model
 
 def fit_t1(signal, delay_times):
     # Initial guess for parameters: amplitude (a), time shift (b), decay constant (c), baseline (d)
@@ -102,7 +103,7 @@ def fit_t1_IQ(I, Q, delay_times, signal='None'):
 
     return fit_t1(signal_data, delay_times)
 
-def fit_lorenzian(signal, freqs, freq_q):
+def fit_lorentzian(signal, freqs, freq_q):
     # Initial guesses for whatever signal channel
     initial_guess = [freq_q, 1, np.max(signal), np.min(signal)]
 
@@ -131,7 +132,7 @@ def fit_lorenzian(signal, freqs, freq_q):
 
     return mean, fit_err, fwhm, fit, amp_fit
 
-def fit_lorenzian_IQ(I, Q, freqs, metric_freq, signal='None', verbose=False):
+def fit_lorentzian_IQ(I, Q, freqs, metric_freq, signal='None', verbose=False):
     """
     Perform Lorentzian fits on I and Q signals over frequency.
 
@@ -162,8 +163,8 @@ def fit_lorenzian_IQ(I, Q, freqs, metric_freq, signal='None', verbose=False):
         If an error occurs during the fit, returns a tuple of None values.
     """
     try:
-        mean_I, fit_err_I, fwhm_I, I_fit, amp_I_fit = fit_lorenzian(I, freqs, freq_q)
-        mean_Q, fit_err_Q, fwhm_Q, Q_fit, amp_Q_fit = fit_lorenzian(Q, freqs, freq_q)
+        mean_I, fit_err_I, fwhm_I, I_fit, amp_I_fit = fit_lorenzian(I, freqs, metric_freq)
+        mean_Q, fit_err_Q, fwhm_Q, Q_fit, amp_Q_fit = fit_lorenzian(Q, freqs, metric_freq)
 
         # Choose which curve to report based on the signal indicator or amplitude difference
         if 'None' in signal:
@@ -216,9 +217,33 @@ def get_lorentzian_fits(I, Q, freqs, verbose=False):
     freqs = np.array(freqs)
     metric_freq = freqs[np.argmax(I)]
 
-    I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err = fit_lorenzian(
-        I, Q, freqs, metric_freq, verbose=verbose
-    )
+    I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err = fit_lorentzian_IQ(
+        I, Q, freqs, metric_freq, verbose=verbose)
 
     return I_fit, Q_fit, largest_amp_curve_mean, largest_amp_curve_fwhm, fit_err
+
+def fit_amp_rabi(signal, gains):
+
+    q1_a_guess = (np.max(signal) - np.min(signal)) / 2
+    q1_d_guess = np.mean(signal)
+    q1_b_guess = 1 / gains[-1]
+    q1_c_guess = 0
+
+    q1_guess = [q1_a_guess, q1_b_guess, q1_c_guess, q1_d_guess]
+    q1_popt, q1_pcov = curve_fit(cosine, gains, signal, maxfev=100000, p0=q1_guess)
+    q1_fit_cosine = cosine(gains, *q1_popt)
+
+    first_three_avg = np.mean(q1_fit_cosine[:3])
+    last_three_avg = np.mean(q1_fit_cosine[-3:])
+
+    if last_three_avg > first_three_avg:
+        pi_amp = gains[np.argmax(q1_fit_cosine)]
+    else:
+        pi_amp = gains[np.argmin(q1_fit_cosine)]
+
+    return pi_amp, q1_fit_cosine
+
+
+
+
 

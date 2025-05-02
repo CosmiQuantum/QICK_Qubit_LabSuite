@@ -5,6 +5,7 @@ import numpy as np
 from ..utils.ana_utils  import rotate_and_threshold
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
+from .data_tools import get_h5_for_qubit
 
 class ssf:
     def __init__(self,data_dir, dataset, QubitIndex, folder="study_data", expt_name ="ss_ge"):
@@ -16,7 +17,8 @@ class ssf:
 
     def load_all(self):
         data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
+        h5_files_all_qubits = os.listdir(data_path)
+        h5_files = get_h5_for_qubit(data_path, h5_files_all_qubits, self.QubitIndex, 'SS')
         h5_files.sort()
         n = len(h5_files)
 
@@ -50,18 +52,29 @@ class ssf:
         xg, yg = np.median(ig), np.median(qg)
         xe, ye = np.median(ie), np.median(qe)
 
+
         ## Compute the rotation angle
         theta = -np.arctan2((ye - yg), (xe - xg))
 
         ## Apply the rotation angle to the IQ data
         ig_new, qg_new, _ = rotate_and_threshold(ig, qg, theta, 0.0)
         ie_new, qe_new, _ = rotate_and_threshold(ie, qe, theta, 0.0)
+        xlims = [np.min(ig_new), np.max(ie_new)]
 
         ## New means of each blob
         xg, yg = np.median(ig_new), np.median(qg_new)
         xe, ye = np.median(ie_new), np.median(qe_new)
+        threshold = np.mean([xg, xe])
 
-        return ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye
+        ng, binsg = np.histogram(ig_new, bins=50, range=xlims)
+        ne, binse = np.histogram(ie_new, bins=50, range=xlims)
+
+        """Compute the fidelity using overlap of the histograms"""
+        contrast = np.abs(((np.cumsum(ng) - np.cumsum(ne)) / (0.5 * ng.sum() + 0.5 * ne.sum())))
+        tind = contrast.argmax()
+        fid = contrast[tind]
+
+        return ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye, theta, threshold, fid
 
 def ssf_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, selected_round=[10, 73]):
     ssf_ge = ssf(data_dir, dataset, QubitIndex)

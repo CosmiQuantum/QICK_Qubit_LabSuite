@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from qicklab.analysis import rspec, qspec, t1, ssf, resstarkspec, starkspec, auto_threshold
+from qicklab.analysis import rspec, qspec, t1, ssf, resstarkspec, starkspec, auto_threshold, ampRabi
 from qicklab.utils import get_abs_min
 
 ############### set values here ###################
 data_dir = "/Users/joycecs/PycharmProjects/PythonProject/.venv/QUIET/QUIET_data/RR_comprehensive_TLS/" #update based on file transfer location from Ryan
 #data_dir = "/exp/cosmiq/data/QUIET/QICK_data/run6/6transmon/TLS_Comprehensive_Study/source_off_substudy1/" #update based on file transfer location from Ryan
+substudy = 'source_off_substudy1'
 dataset = '2025-04-15_21-24-46'
 
 QubitIndex = 0 #zero indexed
@@ -14,6 +15,7 @@ analysis_flags = {"get_threshold": False, "load_all_data": False, "load_optimiza
 selected_round = [10, 73]
 threshold = 0 #overwritten when get_threshold flag is set to True
 theta = 0 #overwritten when get_threshold flag is set to True
+sz=10 #fontsize for plots
 
 res_stark_constant = [-17, 0, 0, 0, -25, 0] # from res stark 2D map
 duffing_constant = [220, 1, 1, 1, 100, 1] # from stark 2D map at fixed detunings
@@ -106,11 +108,26 @@ if analysis_flags["load_optimization_data"]:
     except Exception:
         print("t1_ge data error or t1_ge data missing in optimization block")
 
+    try:
+        print("Loading optimization amp_rabi_ge data...")
+        amp_rabi_ge = ampRabi(data_dir, dataset, QubitIndex, folder="optimization")
+        rabi_dates, rabi_n, rabi_gains, rabi_I, rabi_Q = amp_rabi_ge.load_all()
+        pi_amps = amp_rabi_ge.get_all_pi_amp(rabi_gains, rabi_I, rabi_Q, rabi_n)
+    except Exception:
+        print("amp_rabi_ge data error or amp_rabi_ge data missing in optimization block")
+
+    try:
+        print("Loading optimization SSF data...")
+        opt_ssf_ge = ssf(data_dir, dataset, QubitIndex, folder="optimization")
+        opt_ssf_dates, opt_ssf_n, opt_I_g, opt_Q_g, opt_I_e, opt_Q_e, opt_fid, opt_angles = opt_ssf_ge.load_all()
+    except Exception:
+        print("ssf_ge data error or ssf_ge data missing in optimization block")
+
 if analysis_flags["timestream"]:
     print("Generating timestream plots...")
 
     fig, ax = plt.subplots(3,2, layout='constrained')
-    fig.suptitle(f'dataset {dataset} qubit {QubitIndex + 1} timestream')
+    fig.suptitle(f'{substudy} dataset {dataset} qubit {QubitIndex + 1} timestream')
 
     #### low gain qspec ####
     plot = ax[0][0]
@@ -177,6 +194,7 @@ if analysis_flags['round']:
     plt.rcParams['lines.linewidth'] = 1
 
     for round in selected_round:
+
         ##### qspec data ####
         plot = ax[0][0]
         try:
@@ -185,25 +203,24 @@ if analysis_flags['round']:
 
             plot.plot(qspec_probe_freqs, qspec_mag[round], label=f'round {round + 1}')
             plot.plot(qspec_probe_freqs, qspec_fit, 'k:')
-            plot.set_xlabel('qubit probe frequency [MHz]')
-            plot.set_ylabel('I,Q magnitude [a.u.]')
-            plot.set_title('low gain qspec_ge')
+            plot.set_xlabel('qubit probe frequency [MHz]',fontsize=sz)
+            plot.set_ylabel('I,Q magnitude [a.u.]',fontsize=sz)
+            plot.set_title('low gain qspec_ge',fontsize=sz)
             plot.legend()
         except Exception:
-            plt.text(0,0, "qspec_ge data error or qspec_ge data missing in data-taking block")
+            plot.set_title("qspec_ge data error",fontsize=sz)
 
 
         ##### high gain qspec #####
-
         plot = ax[0][1]
         try:
             plot.plot(hgqspec_probe_freqs, hgqspec_mag[round], label=f'round {round + 1}')
             plot.legend()
-            plot.set_xlabel('qubit probe frequency [MHz]')
-            plot.set_ylabel('I,Q magnitude [a.u.]')
-            plot.set_title('high gain qspec_ge')
+            plot.set_xlabel('qubit probe frequency [MHz]',fontsize=sz)
+            plot.set_ylabel('I,Q magnitude [a.u.]',fontsize=sz)
+            plot.set_title('high gain qspec_ge',fontsize=sz)
         except Exception:
-            plt.text(0,0, "high gain qspec_ge data error or high gain qspec_ge data missing in data-taking block")
+            plot.set_title("high gain qspec_ge data error",fontsize=sz)
 
         ##### t1 data #####
         plot = ax[0][2]
@@ -213,11 +230,11 @@ if analysis_flags['round']:
 
             plot.plot(delay_times, t1_p_excited[round], label=f'round {round + 1} T1 = {T1_est:.2f} +/- {T1_err:.2f} us')
             plot.plot(delay_times, q1_fit_exponential, 'k:')
-            plot.set_title('t1_ge')
-            plot.set_ylabel('P(e)')
-            plot.set_xlabel('delay time [us]')
+            plot.set_title('t1_ge',fontsize=sz)
+            plot.set_ylabel('P(e)',fontsize=sz)
+            plot.set_xlabel('delay time [us]',fontsize=sz)
         except Exception:
-            plt.text(0,0, "t1_ge data error or t1_ge data missing in data-taking block")
+            plot.set_title("t1_ge data error",fontsize=sz)
 
         #resonator stark data#
         plot = ax[1][0]
@@ -225,12 +242,12 @@ if analysis_flags['round']:
         try:
             rstark_p_excited_in_round = rstark.get_p_excited_in_round(rstark_gains, rstark_p_excited, rstark_n, round, plot = False)
             plot.plot(rstark_freqs, rstark_p_excited_in_round, label=f'round {round + 1}')
-            plot.set_xlabel('stark shift [MHz]')
-            plot.set_ylabel('P(e)')
-            plot.set_title('stark tone @ resonator frequency')
+            plot.set_xlabel('stark shift [MHz]',fontsize=sz)
+            plot.set_ylabel('P(e)',fontsize=sz)
+            plot.set_title('stark tone @ resonator frequency',fontsize=sz)
             plot.legend()
         except Exception:
-            plt.text(0,0, "res stark spec data error or res stark spec data missing in data-taking block")
+            plot.set_title("res stark spec data error",fontsize=sz)
 
         stark_p_excited_in_round = stark.get_p_excited_in_round(stark_gains, stark_p_excited, stark_n, round, plot = False)
 
@@ -243,7 +260,7 @@ if analysis_flags['round']:
             plot.set_title('stark tone @ fixed detuning')
             plot.legend()
         except Exception:
-            plt.text(0,0, "stark spec data error or res stark spec data missing in data-taking block")
+            plot.set_title("stark spec data error",fontsize=sz)
 
 
         # ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye = ssf_ge.get_ssf_in_round(I_g, Q_g, I_e, Q_e, round)
@@ -259,10 +276,9 @@ if analysis_flags['round']:
     fig.suptitle(f'dataset {dataset} qubit {QubitIndex + 1}')
 
 if analysis_flags['g-e_optimization_report']:
-    fig, ax = plt.subplots(3,3, layout='constrained')
-    fig.suptitle(f"g-e optimization for qubit {QubitIndex + 1} dataset: {dataset}", fontsize=14)
-    plt.rcParams['font.size'] = 10
-    sz=10
+    fig, ax = plt.subplots(3,3, layout='constrained', figsize=[12,8])
+    fig.suptitle(f"g-e optimization for qubit {QubitIndex + 1} dataset: {dataset} {substudy}", fontsize=14)
+    plt.rcParams['font.size'] = 10 #this doesn't work
 
     plot = ax[0][0]
     try:
@@ -273,7 +289,7 @@ if analysis_flags['g-e_optimization_report']:
         plot.set_ylabel('I,Q magnitude [a.u.]',fontsize=sz)
         plot.set_title(f'res_ge {np.round(rspec_freq,2)} MHz, round {0 + 1} of {rspec_n}',fontsize=sz)
     except Exception:
-        plt.text(0, 0, "rspec_ge data error or rspec_ge data missing in optimization block")
+        plot.set_title("rspec_ge data error",fontsize=sz)
 
     plot = ax[0][1]
     try:
@@ -282,7 +298,7 @@ if analysis_flags['g-e_optimization_report']:
         plot.set_ylabel('resonator frequency [MHz]',fontsize=sz)
         plot.set_title('rspec_ge timestream',fontsize=sz)
     except Exception:
-        plt.text(0, 0, "rspec_ge data error or rspec_ge data missing in optimization block")
+        plot.set_title("rspec_ge data error",fontsize=sz)
 
     ###qspec-ge####
     plot = ax[0][2]
@@ -297,7 +313,7 @@ if analysis_flags['g-e_optimization_report']:
         plot.set_ylabel('I,Q magnitude [a.u.]',fontsize=sz)
         plot.set_title(f'qspec_ge: {np.round(opt_qfreq, 2)} +/- {np.round(opt_qfreq_err, 2)} MHz, fwhm: {np.round(opt_qfwhm, 2)} MHz',fontsize=sz)
     except Exception:
-        plt.text(0, 0, "qspec_ge data error or qspec_ge data missing in optimization block")
+        plot.set_title("qspec_ge data error",fontsize=sz)
 
     plot = ax[1][0]
     try:
@@ -306,7 +322,7 @@ if analysis_flags['g-e_optimization_report']:
         plot.set_ylabel('qubit frequency [MHz]',fontsize=sz)
         plot.set_title('qspec_ge timestream',fontsize=sz)
     except Exception:
-        plt.text(0, 0, "qspec_ge data error or qspec_ge data missing in optimization block")
+        plot.set_title("qspec_ge data",fontsize=sz)
 
 
     ### t1 ####
@@ -320,82 +336,53 @@ if analysis_flags['g-e_optimization_report']:
         plot.set_ylabel('P(e)',fontsize=sz)
         plot.set_xlabel('delay time [us]',fontsize=sz)
     except Exception:
-        plt.text(0, 0, "t1_ge data error or t1_ge data missing in optimization block")
+        plot.set_title("t1_ge data error",fontsize=sz)
 
-    ### t1 ####
-    plot = ax[1][1]
+    ### amp rabi ####
+    plot = ax[1][2]
     try:
-
+        pi_amp, cosine_fit, mag = amp_rabi_ge.get_pi_amp_in_round(rabi_gains, rabi_I, rabi_Q, 0)
+        plot.plot(rabi_gains, mag)
+        plot.plot(rabi_gains, cosine_fit, label='cosine')
+        plot.set_title(f'amp_rabi_ge: {pi_amp:.2f} a.u.', fontsize=sz)
+        plot.set_ylabel('I,Q magnitude [a.u.]', fontsize=sz)
+        plot.set_xlabel('gain [a.u.]', fontsize=sz)
+        plot.legend(fontsize=sz)
     except Exception:
-        plt.text(0, 0, "t1_ge data error or t1_ge data missing in optimization block")
+        plot.set_title("amp_rabi_ge data error",fontsize=sz)
 
+    ### resonator offset frequency optimization ###
+    plot = ax[2][0]
+    plot.set_title("coming soon: resonator offset frequency",fontsize=sz)
 
+    #### ssf ######
+    plot = ax[2][1]
+    try:
+        ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye, theta0, threshold0, fid0 = opt_ssf_ge.get_ssf_in_round(opt_I_g, opt_Q_g, opt_I_e, opt_Q_e, 0)
+        plot.scatter(ig_new, qg_new, c='b',label='g',s=2)
+        plot.scatter(ie_new, qe_new, c='r',label='e',s=2)
+        plot.set_title(f'ssf_ge: theta = {np.round(theta0,3)}')
+        plot.set_xlabel('I [a.u.]', fontsize=sz)
+        plot.set_ylabel('Q [a.u.]', fontsize=sz)
+        plot.plot([threshold0, threshold0],[np.min(qe_new), np.max(qe_new)], 'k:', linewidth=2)
+        plot.legend(fontsize=sz)
+        plot.set_aspect("equal")
+    except Exception as e:
+        raise e
+        plot.set_title("ssf_ge data error",fontsize=sz)
 
+    plot = ax[2][2]
+    try:
+        xlims = [np.min(ig_new), np.max(ie_new)]
+        ng, binsg,pg = plot.hist(ig_new, bins=100, range=xlims, color='b', label='g', alpha=0.5)
+        ne, binse, pe = plot.hist(ie_new, bins=100, range=xlims, color='r', label='e', alpha=0.5)
+        plot.plot([threshold0, threshold0], [0, np.max(ne)*1.2], 'k:', linewidth=2)
+        plot.set_xlabel('I [a.u.]',fontsize=sz)
+        plot.set_title(f'ssf_ge: fidelity = {np.round(fid0,3) *100} %',fontsize=sz)
 
-
-    #
-    # rspec_times = []
-    # for date in rspec_dates:
-    #     rspec_times.append((date - rspec_dates[0]).total_seconds())
-    #
-    # # plot timestream of res spec rounds
-    # col = col+1
-    # plot = ax_opt[row][col]
-    # plot.scatter(rspec_times, rspec_freqs)
-    # plot.set_ylabel('res_ge frequency [MHz]',fontsize=10)
-    # plot.set_xlabel('time [s]',fontsize=10)
-    #
-    # col = col + 1
-    #
-    # ############################### QSpec #######################
-    # max_signal, I_or_Q, qspec_probe_freqs, qspec_freq, qspec_fwhm, qspec_fit, qspec_fit_err = get_opt_qspec_data(
-    #     data_path, QubitIndex)
-    #
-    # plot = ax_opt[row, col]
-    # plot.plot(qspec_probe_freqs, I_or_Q)
-    # plot.plot(qspec_probe_freqs, qspec_fit, label='Lorentzian')
-    # plot.plot([qspec_freq, qspec_freq], [np.min(I_or_Q), np.max(I_or_Q)], 'r:')
-    # plot.legend(loc='best',fontsize=10)
-    # plot.set_xlabel('qubit probe frequency [MHz]',fontsize=10)
-    # plot.set_ylabel(max_signal)
-    # plot.set_title(f'qspec_ge: {np.round(qspec_freq, 2)} +/- {np.round(qspec_fit_err, 2)} MHz, fwhm: {np.round(qspec_fwhm, 2)} MHz',fontsize=10)
-    # col = col + 1
-    #
-    # col = 0
-    # row = 1
-    #
-    # max_signal, I_or_Q, rabi_gains, pi_amp, rabi_fit = get_opt_rabi_data(data_path, QubitIndex)
-    #
-    # plot = ax_opt[row, col]
-    # plot.plot(rabi_gains, I_or_Q, label='data')
-    # plot.plot(rabi_gains, rabi_fit, label='cosine')
-    # plot.legend(fontsize=10)
-    # plot.set_xlabel('gain [a.u.]',fontsize=10)
-    # plot.set_ylabel(max_signal,fontsize=10)
-    # plot.set_title(f'rabi_ge: {np.round(pi_amp, 4)} a.u. pi amp', fontsize=10)
-    # col = col + 1
-    #
-    # ######################## offset res freq data ############
-    # res_freq_steps, mean_fids = get_opt_offset_data(data_path, QubitIndex)
-    #
-    # plot = ax_opt[row, col]
-    # plot.plot(res_freq_steps, np.array(mean_fids) * 100,marker='o',linestyle='-')
-    # plot.set_xlabel('resonator frequency offset [MHz]',fontsize=10)
-    # plot.set_ylabel('avg fidelity [%]',fontsize=10)
-    # col = col+1
-    #
-    # ######################## ssf data #######################
-    # ss_dates, ss_fid, ss_angle, I_g, Q_g, I_e, Q_e, num_rounds = get_opt_ssf_data(data_path, QubitIndex)
-    # hist_ssf([I_g, Q_g, I_e, Q_e], ax_opt, row, col, numbins=100)
-    #
-    # ###############save data#######################
-    # plt.show(block=False)
-    # png_name = f'{dataset}_Q{QubitIndex+1}_optimization_report_ge.png'
-    # png_path = os.path.join(substudy_dir, dataset, 'documentation', png_name)
-    # fig_opt.savefig(png_path)
-    #
-    # plt.close(fig_opt)
-
+    except Exception as e:
+        raise e
+        plot.set_title("ssf_ge data error",fontsize=sz)
 
 
 plt.show()

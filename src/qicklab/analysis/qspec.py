@@ -6,7 +6,7 @@ from scipy.optimize import curve_fit
 from ..utils.data_utils import process_h5_data
 from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_qspec_simple
-from .fit_tools import fit_lorenzian
+from .fit_tools import fit_lorentzian
 from .data_tools import get_h5_for_qubit
 
 class qspec:
@@ -44,7 +44,7 @@ class qspec:
         mag = np.sqrt(np.square(I) + np.square(Q))
         freqs = np.array(freqs)
         freq_q = freqs[np.argmax(mag)]
-        qfreq, qfreq_err, fwhm, qspec_fit, qspec_fit_amp = fit_lorenzian(mag, freqs, freq_q)
+        qfreq, qfreq_err, fwhm, qspec_fit, qspec_fit_amp = fit_lorentzian(mag, freqs, freq_q)
         return qfreq, qfreq_err, fwhm, qspec_fit
 
     def get_qspec_freq_in_round(self, qspec_probe_freqs, I, Q, round, n, plot=False):

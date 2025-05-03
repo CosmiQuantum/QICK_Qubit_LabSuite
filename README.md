@@ -11,6 +11,8 @@ Custodians:
 
 - [Codebase Structure](#codebase-structure)
 - [Conventions & Requirements](#conventions--requirements)
+    - [Top Level Folders](#top-level-folders) 
+    - [Core Library](#core-library)
 - [Usage](#usage)
 - [Contributing](#contributing)
   
@@ -28,9 +30,13 @@ The codebase is organized as follows:
     - `utils/`
 - `tests/`
 
-### Conventions & Requirements
-Each of these directories has specific conventions and requirements, as outlined below.
+---
 
+## Conventions & Requirements
+Each of these directories has specific conventions and requirements, as outlined below.
+##
+### Top Level Folders
+##
 #### `configs/`
 The actual configuration files used to run data acquisition live here. Each facility has its own directory to contain configuration files relevant for collecting qubit data there.
 
@@ -46,7 +52,9 @@ These are high-level analysis scripts, which should not call any classes or meth
 
 ##### `scripts/routines`
 These are high-level experiment scripts, which can call classes or methods with dependencies on `qick`. They should mostly import methods and classes from the folders `src/qicklab/hardware` and `src/qicklab/experiments` to run routines using QICK.
-
+##
+### Core Library
+##
 #### `src/qicklab`
 The "meat" of the codebase. This is the backend, where all methods that should be `import`ed for analysis or acquisition live. No true scripts live here. Each subdirectory here has its own requirements and conventions, below.
 
@@ -79,6 +87,7 @@ These are low-level helper methods that are of general use/interest.
 
 **Conventions.** File names should be indicative of what types of methods are contained in the file, and the methods should be logically grouped.
 
+---
 ## Usage
 
 To install this package navigate to this directory and run this in the command line:
@@ -90,21 +99,23 @@ If it is already installed and you need to update the package, run:
 pip install --upgrade .
 ```
 Or, just re-run the `pip install .` command. Note that these commands need to be run from the directory `/path/to/QICK_Qubit_LabSuite`.
-
+##
 ### Offline Analysis
+##
 For offline analysis scripts, your preamble should include the lines
 ```
 from qicklab.analysis import *
 from qicklab.utils import *
 ```
 (Or, better yet, replacing `*` with only the methods and classes you plan to use in your analysis.) This avoids having any dependencies on QICK, and will allow you to perform offline analysis of previously collected data on any machine.
-
+##
 ### Data Acquisition
+##
 For data acquisition scripts, just go ahead and import the whole shebang:
 ```
 import qicklab
 ```
-
+---
 ## Contributing
 If you'd like to add a new analysis, follow these steps.
 1. Create a new branch using the instructions found at the CosmiQ [How to use github](https://github.com/CosmiQuantum/how_to_use_github) repo.

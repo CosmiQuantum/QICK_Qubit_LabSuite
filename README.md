@@ -22,6 +22,8 @@ The codebase is organized as follows:
     - `NEXUS/`
     - `QUIET/`
 - `scripts/`
+  - `processing`
+  - `routines`
 - `src/qicklab/`
     - `analysis/`
     - `config/`

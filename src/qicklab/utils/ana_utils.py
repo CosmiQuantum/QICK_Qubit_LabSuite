@@ -1,6 +1,6 @@
 '''
 ana_utils.py
-    Collection of general analysis methods that are broadly useful.
+    Collection of general processing methods that are broadly useful.
     These methods should have no dependencies to other files in the codebase.
 '''
 

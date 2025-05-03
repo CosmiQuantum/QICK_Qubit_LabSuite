@@ -35,11 +35,17 @@ Each of these directories has specific conventions and requirements, as outlined
 The actual configuration files used to run data acquisition live here. Each facility has its own directory to contain configuration files relevant for collecting qubit data there.
 
 #### `scripts/`
-Here, one can place high-level analysis scripts that `import` the `qicklab` package. These should be true scripts, and not Python files that are collections of helper methods (*i.e.,* these files should not be `import`ed). These scripts can be examples of how to do analysis, DAQ scripts, or actual analyses that we will be running repeatedly.
+Here, one can place high-level scripts that `import` the `qicklab` package. These should be true scripts, and not Python files that are collections of helper methods (*i.e.,* these files should not be `import`ed). These scripts can be examples of how to do analysis, DAQ scripts, or actual analyses that we will be running repeatedly.
 
 **Requirements.** The body of the script should be inside the `if __name__ == __main__:` conditional as is Pythonic standard.
 
 **Conventions.** It is helpful to use `argparse` to accept command-line arguments to the script, so that the contents do not need to be edited regularly.
+
+##### `scripts/processing`
+These are high-level analysis scripts, which should not call any classes or methods with dependencies on `qick`. They should mostly import methods and classes from the folders `src/qicklab/analysis` and `src/qicklab/utils`.
+
+##### `scripts/routines`
+These are high-level experiment scripts, which can call classes or methods with dependencies on `qick`. They should mostly import methods and classes from the folders `src/qicklab/hardware` and `src/qicklab/experiments` to run routines using QICK.
 
 #### `src/qicklab`
 The "meat" of the codebase. This is the backend, where all methods that should be `import`ed for analysis or acquisition live. No true scripts live here. Each subdirectory here has its own requirements and conventions, below.
@@ -72,10 +78,6 @@ These are low-level helper methods that are of general use/interest.
 **Requirements.** These must have **no dependencies** on files elsewhere in `src/qicklab`. They can, however, have dependencies to other files within `src/qicklab/utils` (just be mindful of circular imports, which will cause errors). 
 
 **Conventions.** File names should be indicative of what types of methods are contained in the file, and the methods should be logically grouped.
-
-
-#### `tests/`
-TBD... likely unit tests and test acquisition methods. These can be run to ensure that changes to the codebase do not change the expected output of various acquisition and analysis methods. The files here are subject to the same requirements and conventions as in `scripts/`
 
 ## Usage
 

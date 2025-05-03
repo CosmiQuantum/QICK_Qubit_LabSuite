@@ -13,8 +13,8 @@ from qick.asm_v2 import QickSpan, QickSweep1D
 # print(soccfg)
 
 def add_single_qubit_experiment(expt_cfg, expt_name, QubitIndex):
-    # In most of cases, we have single parameter experiments and two parameter experiment.
-    # For single parameter experiments, using "start", "stop", and "step" to calculate "expts".
+    # In most of cases, we have single parameter routines and two parameter experiment.
+    # For single parameter routines, using "start", "stop", and "step" to calculate "expts".
     # For two parameter experiment, we follow the order "length" or "gain" (inner, RAverage) -- "freq" (outer, Python)
 
     #exp_cfg = expt_cfg[expt_name]

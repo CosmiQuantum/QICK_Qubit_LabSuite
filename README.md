@@ -7,6 +7,13 @@ Custodians:
 - Joyce Christiansen-Salameh (Cornell)
 - Dylan Temples (FNAL)
 
+## Table of Contents
+
+- [Codebase Structure](#codebase-structure)
+- [Conventions & Requirements](#conventions--requirements)
+- [Usage](#usage)
+- [Contributing](#contributing)
+  
 ## Codebase Structure
 The codebase is organized as follows:
 - `configs/`
@@ -98,9 +105,14 @@ import qicklab
 
 ## Contributing
 If you'd like to add a new analysis, follow these steps.
-1. Create a Python file containing a class that defines the analysis you want to do. It should include pulling the data from disk and parsing it into useful data structures. Give the file the same name as your class (all lower case or camelCase).
-2. Move that file into `src/qicklab/analysis`.
-3. Open the file `src/qicklab/analysis/__init__.py` and add a line importing your class:
+1. Create a new branch using the instructions found at the CosmiQ [How to use github](https://github.com/CosmiQuantum/how_to_use_github) repo.
+2. Create a Python file containing a class that defines the analysis you want to do. It should include pulling the data from disk and parsing it into useful data structures. Please use the following naming convention:
+   - If your file contains a class, give the file the same name as your class using CamelCase.
+   - If your file does not contain a class, please use the naming convention all_lowercase_with_underscores.py
+   - For methods, please use the convention all_lowercase_with_underscores_definition()
+   - If a file has a class, it should only contain that class in it
+4. Move that file into `src/qicklab/analysis`.
+5. Open the file `src/qicklab/analysis/__init__.py` and add a line importing your class:
 ```
 from .myAnaClass import myAnaClass
 ```

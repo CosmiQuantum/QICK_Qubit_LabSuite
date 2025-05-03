@@ -123,14 +123,15 @@ If you'd like to add a new analysis, follow these steps.
 2. On your branch, create a Python file containing a class that defines the analysis you want to do. It should include pulling the data from disk and parsing it into useful data structures. Please use the following naming convention:
    - If your file contains a class, give the file the same name as your class using CamelCase.
    - If your file does not contain a class, please use the naming convention all_lowercase_with_underscores.py
-   - For methods, please use the convention all_lowercase_with_underscores_definition()
-   - If a file has a class, it should only contain that class in it
+   - For methods, please use the convention all_lowercase_with_underscores_definition().
+   - If a file has a class, it should only contain that class in it.
 4. Move that file into `src/qicklab/analysis`.
 5. Open the file `src/qicklab/analysis/__init__.py` and add a line importing your class:
 ```
 from .myAnaClass import myAnaClass
 ```
-6. Once your changes are complete, make a merge request into the development branch following the instructions found under step 5 in the [Pipeline for new contributions](https://github.com/CosmiQuantum/how_to_use_github#pipeline-for-new-contributions) section of the CosmiQ [How to use github](https://github.com/CosmiQuantum/how_to_use_github) repo.
+6. Add to the README.md files briefly describing your script (it can be just a one line description if you want) if necessary.
+7. Once your changes are complete, make a merge request into the development branch following the instructions found under step 5 in the [Pipeline for new contributions](https://github.com/CosmiQuantum/how_to_use_github#pipeline-for-new-contributions) section of the CosmiQ [How to use github](https://github.com/CosmiQuantum/how_to_use_github) repo.
 
 And that's it! Now when you `from qicklab.analysis import *`, your analysis will be ready for use.
 

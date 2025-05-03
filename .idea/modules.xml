@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/QICK_Qubit_LabSuite.iml" filepath="$PROJECT_DIR$/.idea/QICK_Qubit_LabSuite.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../how_to_use_github/.idea/how_to_use_github.iml" filepath="$PROJECT_DIR$/../how_to_use_github/.idea/how_to_use_github.iml" />
     </modules>
   </component>
 </project>

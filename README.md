@@ -28,7 +28,6 @@ The codebase is organized as follows:
     - `experiments/`
     - `hardware/`
     - `utils/`
-- `tests/`
 
 ---
 

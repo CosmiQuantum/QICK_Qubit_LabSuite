@@ -1,5 +1,5 @@
 from qicklab.experiments.measurements import ResonanceSpectroscopy
-from .expt_config import list_of_all_qubits, tot_num_of_qubits
+from .ExperimentConfig import list_of_all_qubits, tot_num_of_qubits
 from qicklab.utils.file_helpers import create_data_dict, check_visdom_connection, mask_gain_res
 import visdom
 import os

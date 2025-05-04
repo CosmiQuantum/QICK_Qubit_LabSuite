@@ -119,7 +119,7 @@ import qicklab
 ---
 ## Contributing
 If you'd like to add a new analysis, follow these steps.
-1. Open a new Issue and create a new branch by following **steps 1–4** under the [Pipeline for new contributions](https://github.com/CosmiQuantum/how_to_use_github#pipeline-for-new-contributions) section in the CosmiQ [How to use GitHub](https://github.com/CosmiQuantum/how_to_use_github#contents) guide. Please follow the branching strategy outlined in[Branching Strategy for Library Development](https://github.com/CosmiQuantum/how_to_use_github#branching-strategy-for-library-development).
+1. Open a new Issue and create a new branch by following **steps 1–4** under the [Pipeline for new contributions](https://github.com/CosmiQuantum/how_to_use_github#pipeline-for-new-contributions) section in the CosmiQ [How to use GitHub](https://github.com/CosmiQuantum/how_to_use_github#contents) guide. Please follow the branching strategy outlined in [Branching Strategy for Library Development](https://github.com/CosmiQuantum/how_to_use_github#branching-strategy-for-library-development).
 2. On your branch, create a Python file containing a class that defines the analysis you want to do. It should include pulling the data from disk and parsing it into useful data structures. Please use the following naming convention:
    - If your file contains a class, give the file the same name as your class using CamelCase.
    - If your file does not contain a class, please use the naming convention all_lowercase_with_underscores.py

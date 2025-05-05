@@ -179,7 +179,6 @@ def load_from_h5(filename, data_type, save_r=1):
             data[data_type][qubit_index] = qubit_data
     return data
 
-
 def load_from_h5_with_shotdata(filename, data_type, save_r=1):  # Added save_r as parameter.
 
     data = {data_type: {}}  # Initialize the main dictionary with the data_type.
@@ -198,7 +197,7 @@ def load_from_h5_with_shotdata(filename, data_type, save_r=1):  # Added save_r a
                                        'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
                 elif data_type == 'QSpec':
                     target_keys = {'Dates': 'Dates', 'I': 'I', 'Q': 'Q', 'Frequencies': 'Frequencies',
-                                       'I Fit': 'I Fit', 'Q Fit': 'Q Fit', 'Round Num': 'Round Num',
+                                       'I Fit': 'I Fit', 'Q Fit': 'Q Fit', 'Recycled QFreq': 'Recycled QFreq', 'Round Num': 'Round Num',
                                        'Batch Num': 'Batch Num','Exp Config': 'Exp Config', 'Syst Config': 'Syst Config'}
                 elif data_type == 'Ext_QSpec':
                     target_keys = {'Dates': 'Dates', 'I': 'I', 'Q': 'Q', 'Frequencies': 'Frequencies','Round Num': 'Round Num',
@@ -245,7 +244,6 @@ def load_from_h5_with_shotdata(filename, data_type, save_r=1):  # Added save_r a
             data[data_type][qubit_index] = qubit_data
 
     return data
-
 
 def load_h5_data(filename, data_type, save_r=1):
     """

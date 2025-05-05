@@ -50,7 +50,6 @@ class t1:
         return dates, n, delay_times, steps, reps, I_shots, Q_shots
 
     def plot_shots(self, I_shots, Q_shots, delay_times, n, round=0, idx=10):
-        # print(np.shape(I_shots))
 
         this_I = I_shots[round][:,idx]
         this_Q = Q_shots[round][:,idx]

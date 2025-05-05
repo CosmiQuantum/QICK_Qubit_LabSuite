@@ -12,7 +12,7 @@ data_dir = os.path.join(study_dir, substudy)
 dataset = '2025-04-15_21-24-46'
 
 QubitIndex = 0 #zero indexed
-analysis_flags = {"get_threshold": True, "load_all_data": False, "load_optimization_data": True, "timestream": False, "round": False, "g-e_optimization_report": True}
+analysis_flags = {"get_threshold": True, "load_all_data": True, "load_optimization_data": False, "timestream": True, "round": False, "g-e_optimization_report": False}
 selected_round = [73]
 threshold = 0 #overwritten when get_threshold flag is set to True
 theta = 0 #overwritten when get_threshold flag is set to True
@@ -36,6 +36,7 @@ if analysis_flags["load_all_data"]:
         qspec_ge = qspec(data_dir, dataset, QubitIndex)
         qspec_dates, qspec_n, qspec_probe_freqs, qspec_I, qspec_Q = qspec_ge.load_all()
         qspec_freqs, qspec_errs, qspec_fwhms = qspec_ge.get_all_qspec_freq(qspec_probe_freqs, qspec_I, qspec_Q, qspec_n)
+        qspec_mag = np.sqrt(np.square(qspec_I) + np.square(qspec_Q))
         start_time = qspec_dates[0]
     except Exception:
         print("qspec_ge data error or qspec_ge data missing in data-taking block")
@@ -145,13 +146,13 @@ if analysis_flags["timestream"]:
     ##### single-shot ##########
     plot = ax[1][0]
     try:
-        plot.errorbar(get_abs_min(start_time,ssf_dates), np.array(fid) * 100, fmt='o')
+        plot.errorbar(get_abs_min(start_time,ssf_dates), np.array(fids) * 100, fmt='o')
         plot.set_xlabel('time [min]')
         plot.set_ylabel('single-shot fidelity [%]')
         for i in selected_round:
-            plot.scatter((ssf_dates[i] - start_time).total_seconds()/60, fid[i]*100, marker="o",s=200, alpha=0.5)
+            plot.scatter((ssf_dates[i] - start_time).total_seconds()/60, fids[i]*100, marker="o",s=200, alpha=0.5)
     except Exception:
-        plot.title("ssf_ge data error")
+        plot.set_title("ssf_ge data error")
 
     ##### t1 data #####
     plot = ax[2][0]
@@ -164,10 +165,26 @@ if analysis_flags["timestream"]:
     except Exception:
         plot.title("t1_ge data error")
 
-    ##### high gain qspec #####
+    ## low gain qspec color plot ##
     plot = ax[0][1]
     try:
-        cbar = plt.colorbar(plot.pcolormesh(get_abs_min(start_time,hgqspec_dates), hgqspec_probe_freqs , np.transpose(hgqspec_mag), #np.transpose(np.sqrt(np.square(I)+np.square(Q))),
+        cbar = plt.colorbar(
+            plot.pcolormesh(get_abs_min(start_time, qspec_dates), qspec_probe_freqs, np.transpose(qspec_mag),
+                            shading="nearest", cmap="viridis"), ax=plot)
+        cbar.set_label("I,Q magnitude [a.u.]")
+        plot.set_ylabel('qubit probe frequency [MHz]')
+        plot.set_xlabel('time [min]')
+        plot.set_title('qspec_ge')
+        for i in selected_round:
+            plot.scatter((qspec_dates[i] - start_time).total_seconds() / 60, qspec_probe_freqs[0], marker="^",
+                         s=200, alpha=1.0)
+    except Exception:
+        plot.title("qspec_ge data error")
+
+    ##### high gain qspec #####
+    plot = ax[1][1]
+    try:
+        cbar = plt.colorbar(plot.pcolormesh(get_abs_min(start_time,hgqspec_dates), hgqspec_probe_freqs , np.transpose(hgqspec_mag),
                                         shading="nearest", cmap="viridis"), ax=plot)
         cbar.set_label("I,Q magnitude [a.u.]")
         plot.set_ylabel('qubit probe frequency [MHz]')
@@ -178,19 +195,19 @@ if analysis_flags["timestream"]:
     except Exception:
         plot.title("high gain qspec_ge data error")
 
-    ##### res stark spec ######
-    plot = ax[1][1]
-    try:
-        cbar = plt.colorbar(plot.pcolormesh(get_abs_min(start_time,rstark_dates), rstark_freqs, np.transpose(rstark_p_excited),
-                                        shading="nearest", cmap="viridis"), ax=plot)
-        cbar.set_label("P(MS=1)")
-        plot.set_ylabel('stark shift [MHz]')
-        plot.set_xlabel('time [min]')
-        plot.set_title('stark tone @ resonator frequency')
-        for i in selected_round:
-            plot.scatter((rstark_dates[i] - start_time).total_seconds()/60, rstark_freqs[len(rstark_freqs)-1], marker="^",s=150, alpha=1.0)
-    except Exception:
-        plot.title("res stark spec data error")
+    # ##### res stark spec ######
+    # plot = ax[1][1]
+    # try:
+    #     cbar = plt.colorbar(plot.pcolormesh(get_abs_min(start_time,rstark_dates), rstark_freqs, np.transpose(rstark_p_excited),
+    #                                     shading="nearest", cmap="viridis"), ax=plot)
+    #     cbar.set_label("P(MS=1)")
+    #     plot.set_ylabel('stark shift [MHz]')
+    #     plot.set_xlabel('time [min]')
+    #     plot.set_title('stark tone @ resonator frequency')
+    #     for i in selected_round:
+    #         plot.scatter((rstark_dates[i] - start_time).total_seconds()/60, rstark_freqs[len(rstark_freqs)-1], marker="^",s=150, alpha=1.0)
+    # except Exception:
+    #     plot.title("res stark spec data error")
 
     #### stark spec at fixed detuning #####
     plot = ax[2][1]

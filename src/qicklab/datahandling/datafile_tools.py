@@ -230,8 +230,10 @@ def process_h5_data(data):
 
 def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps=None):
     
+    ## Pull the field of interest out of the full dictionary
     data = data_dict[expt_name][int(qubit_idx)][data_field]
 
+    ## Determine shape and type of the data that we want to return
     datashape = np.shape(data)
     testval   = data
     for i in np.arange(len(datashape)):
@@ -240,11 +242,15 @@ def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps
 
     print(data_field, datashape, datatype)
 
+    ## If this is the old format for data, handle the string and get an array
     if datatype == np.bytes_:
         ## This is the old format of data
         data = process_h5_data(data[0][0].decode())
+    ## Otherwise, it should already be an np array not some string
 
     # data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
+
+    ## Now reshape the data if requested
     if (reps is not None) and (steps is not None):
         return np.array(data).reshape([steps, reps])
     else:

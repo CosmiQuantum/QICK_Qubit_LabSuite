@@ -1,18 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from qicklab.analysis import rspec, qspec, t1, ssf, resstarkspec, starkspec, auto_threshold, ampRabi
 from qicklab.utils import get_abs_min
 
 ############### set values here ###################
-#data_dir = "/Users/joycecs/PycharmProjects/PythonProject/.venv/QUIET/QUIET_data/RR_comprehensive_TLS/" #update based on file transfer location from Ryan
-study_dir = "/exp/cosmiq/data/QUIET/QICK_data/run6/6transmon/TLS_Comprehensive_Study/" #update based on file transfer location from Ryan
+data_dir = "/Users/joycecs/PycharmProjects/PythonProject/.venv/QUIET/QUIET_data/RR_comprehensive_TLS/" #update based on file transfer location from Ryan
+#study_dir = "/exp/cosmiq/data/QUIET/QICK_data/run6/6transmon/TLS_Comprehensive_Study/" #update based on file transfer location from Ryan
 substudy = 'source_off_substudy1'
-data_dir = os.path.join(study_dir, substudy)
+#data_dir = os.path.join(study_dir, substudy)
 dataset = '2025-04-15_21-24-46'
 
-QubitIndex = 0 #zero indexed
-analysis_flags = {"get_threshold": True, "load_all_data": True, "load_optimization_data": False, "timestream": True, "round": False, "g-e_optimization_report": False}
+QubitIndex = 4 #zero indexed
+analysis_flags = {"get_threshold": True, "load_all_data": True, "load_optimization_data": True, "timestream": True, "round": True, "g-e_optimization_report": True}
 selected_round = [73]
 threshold = 0 #overwritten when get_threshold flag is set to True
 theta = 0 #overwritten when get_threshold flag is set to True
@@ -303,7 +304,7 @@ if analysis_flags['round']:
         plot = ax[1][2]
         try:
             theta0, threshold0, fid0, ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye = ssf_ge.get_ssf_in_round(
-                I_g, Q_g, I_e, Q_e, 0)
+                I_g, Q_g, I_e, Q_e, round)
             plot.scatter(ig_new, qg_new, c='b', label='g', s=2)
             plot.scatter(ie_new, qe_new, c='r', label='e', s=2)
             plot.set_title(f'ssf_ge: theta = {np.round(theta0, 3)}, threshold = {np.round(threshold0, 2)}', fontsize=sz)

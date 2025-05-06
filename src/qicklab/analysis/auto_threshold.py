@@ -21,7 +21,7 @@ class auto_threshold:
         self.expt_name = expt_name
         self.folder = folder
 
-    def load_sample(self, idx=0):
+    def load_sample(self, idx=0, step_idx=0):
         data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
         h5_files = os.listdir(data_path)
         h5_files.sort()
@@ -29,7 +29,7 @@ class auto_threshold:
         load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
         gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
-        step_idx = int(steps/2)
+        #step_idx = int(steps/2)
         reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
         I_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape([steps, reps])
         Q_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Q', [])[0][0].decode())).reshape([steps, reps])

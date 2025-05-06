@@ -157,7 +157,7 @@ def load_h5_data(filename, data_type, save_r=1):
     global_fields = ['Dates', 'Round Num', 'Batch Num', 'Exp Config', 'Syst Config']
     target_fields = {
         "Res": ['freq_pts', 'freq_center', 'Amps', 'Found Freqs']+global_fields,
-        "QSpec": ['I', 'Q', 'Frequencies', 'I Fit', 'Q Fit', 'Recycled QFreq']+global_fields,
+        "QSpec": ['I', 'Q', 'Frequencies', 'I Fit', 'Q Fit', 'Recycled QFreq', 'P', 'Gain Sweep']+global_fields,
         "Ext_QSpec": ['I', 'Q', 'Frequencies']+global_fields,
         "Rabi": ['I', 'Q', 'Gains', 'Fit']+global_fields,
         "SS": ['Fidelity', 'Angle', 'I_g', 'Q_g', 'I_e', 'Q_e']+global_fields,
@@ -240,7 +240,11 @@ def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps
 
     print(data_field, datashape, datatype)
 
-    data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
+    if datatype == np.bytes_:
+        ## This is the old format of data
+        data = process_h5_data(data[0][0].decode())
+
+    # data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
     if (reps is not None) and (steps is not None):
         return np.array(data).reshape([steps, reps])
     else:

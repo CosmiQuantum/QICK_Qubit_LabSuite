@@ -1,4 +1,3 @@
-## Note: these are specific to a data format and probably don't belong here
 import os, h5py
 import numpy as np
 
@@ -224,8 +223,18 @@ def process_h5_data(data):
     numbers = [float(x) for x in cleaned_data.split() if x]
     return numbers
 
-
 def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps=None):
+    
+    data = data_dict[expt_name][int(qubit_idx)][data_field]
+
+    datashape = np.shape(data)
+    testval   = data
+    for i in np.arange(len(datashape)):
+        testval = testval[0]
+    datatype  = type(testval)
+
+    print(data_field, datashape, datatype)
+
     data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
     if (reps is not None) and (steps is not None):
         return np.array(data).reshape([steps, reps])

@@ -1,7 +1,8 @@
 import os, glob
-import time, datetime
+import time
 import numpy as np
 
+from datetime import datetime
 from .datafile_tools import DATETIME_FMT
 
 class DataAggregator:

@@ -242,7 +242,7 @@ def process_h5_data(data):
     numbers = [float(x) for x in cleaned_data.split() if x]
     return numbers
 
-def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps=None):
+def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps=None, verbose=False):
     
     ## Pull the field of interest out of the full dictionary
     data = data_dict[expt_name][int(qubit_idx)][data_field]
@@ -254,7 +254,7 @@ def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps
         testval = testval[0]
     datatype  = type(testval)
 
-    print(data_field, datashape, datatype)
+    if verbose: print(data_field, datashape, datatype)
 
     ## If this is the old format for data, handle the string and get an array
     if datatype == np.bytes_:

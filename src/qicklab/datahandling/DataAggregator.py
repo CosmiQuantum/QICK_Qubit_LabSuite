@@ -50,7 +50,7 @@ class DataAggregator:
         run_ts = np.array([time.mktime(datetime.strptime(run, DATETIME_FMT).timetuple()) for run in runlist])
         run_idx = np.argwhere( (run_ts>=self.mintimestamp) & (run_ts<=self.maxtimestamp) )
         goodruns = runlist[run_idx]
-        goodpaths = pathlist[run_idx]
+        goodpaths = np.array([path[0] for path in pathlist[run_idx]])
 
         print(np.shape(goodpaths))
 

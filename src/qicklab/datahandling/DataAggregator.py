@@ -38,6 +38,8 @@ class DataAggregator:
             runlist += os.listdir(path) 
             pathlist += [path]*len(os.listdir(path))
 
+        print(np.shape(pathlist))
+
         sortidx = np.argsort(runlist)
         runlist = np.array(runlist)[sortidx]
         pathlist = np.array(pathlist)[sortidx]

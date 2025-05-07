@@ -39,8 +39,8 @@ class DataAggregator:
             pathlist += [path]*len(os.listdir(path))
 
         sortidx = np.argsort(runlist)
-        runlist = np.array(runlist[sortidx])
-        pathlist = np.array(pathlist[argsort])
+        runlist = np.array(runlist)[sortidx]
+        pathlist = np.array(pathlist)[argsort]
         if verbose: print(runlist)
 
         ## Now get datetimes of everything for comparison

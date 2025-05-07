@@ -13,7 +13,7 @@ class DataAggregator:
         self.mindataset = mindataset
         self.maxdataset = maxdataset
         self.mintimestamp = time.mktime(datetime(2000,1,1,0,0,0).timetuple()) if self.mindataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
-        self.maxtimestamp = time.mktime(datetime(2100,1,1,0,0,0).timetuple()) if self.maxdataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
+        self.maxtimestamp = time.mktime(datetime(2100,1,1,0,0,0).timetuple()) if self.maxdataset is None else time.mktime(datetime.strptime(self.maxdataset, DATETIME_FMT).timetuple())
 
     def load_all(self, verbose=False):
         alldata = {}

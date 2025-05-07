@@ -16,7 +16,7 @@ class DataAggregator:
         alldata = {}
 
         ## Ensure the substudy_list is a list even if only a sigle substudy was provided
-        runlistshape = np.shape(substudy_list)
+        runlistshape = np.shape(self.substudy_list)
         if len(runlistshape)==0:
             self.substudy_list = [self.substudy_list]
         Nsubstudies = len(self.substudy_list)

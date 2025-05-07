@@ -23,9 +23,6 @@ class auto_threshold:
 
     def load_sample(self, idx=0):
         h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
-        # data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        # h5_files = os.listdir(data_path)
-        # h5_files.sort()
 
         ## Load the H5 data into a dictionary
         load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)

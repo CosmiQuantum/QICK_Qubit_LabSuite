@@ -40,7 +40,7 @@ class DataAggregator:
 
         sortidx = np.argsort(runlist)
         runlist = np.array(runlist)[sortidx]
-        pathlist = np.array(pathlist)[argsort]
+        pathlist = np.array(pathlist)[sortidx]
         if verbose: print(runlist)
 
         ## Now get datetimes of everything for comparison

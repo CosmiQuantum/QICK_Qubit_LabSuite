@@ -31,12 +31,16 @@ class DataAggregator:
 
         ## Now for every substudy, find the total list of datasets contained
         runlist = []
+        pathlist = []
         for path in fullpaths:
 
             ## Grab the dataset IDs in this substudy
             runlist += os.listdir(path) 
+            pathlist += [path]*len(os.listdir(path))
 
-        runlist = np.sort(runlist)
+        sortidx = np.argsort(runlist)
+        runlist = runlist[sortidx]
+        pathlist = pathlist[argsort]
         if verbose: print(runlist)
 
         ## Now get datetimes of everything for comparison
@@ -44,8 +48,9 @@ class DataAggregator:
 
         run_idx = np.argwhere( (run_ts>=self.mintimestamp) & (run_ts<=self.maxtimestamp) )
         goodruns = runlist[run_idx]
+        goodpaths = pathlist[run_idx]
 
-        return goodruns
+        return goodpaths, goodruns
 
 
 

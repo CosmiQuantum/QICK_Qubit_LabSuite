@@ -43,11 +43,11 @@ class DataAggregator:
         sortidx = np.argsort(runlist)
         runlist = np.array(runlist)[sortidx]
         pathlist = np.array(pathlist)[sortidx]
-        if verbose: print(runlist)
+        if verbose: print("Runs:", runlist)
+        if verbose: print("Paths:", pathlist)
 
         ## Now get datetimes of everything for comparison
         run_ts = np.array([time.mktime(datetime.strptime(run, DATETIME_FMT).timetuple()) for run in runlist])
-
         run_idx = np.argwhere( (run_ts>=self.mintimestamp) & (run_ts<=self.maxtimestamp) )
         goodruns = runlist[run_idx]
         goodpaths = pathlist[run_idx]

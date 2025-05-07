@@ -50,7 +50,7 @@ class DataAggregator:
         goodruns = runlist[run_idx]
         goodpaths = pathlist[run_idx]
 
-        return goodpaths, goodruns
+        return goodruns, goodpaths 
 
 
 

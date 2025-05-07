@@ -12,6 +12,8 @@ class DataAggregator:
         self.substudy_list = substudy_list
         self.mindataset = mindataset
         self.maxdataset = maxdataset
+        self.mintimestamp = time.mktime(datetime(2000,1,1,0,0,0).timetuple()) if self.mindataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
+        self.maxtimestamp = time.mktime(datetime(2100,1,1,0,0,0).timetuple()) if self.maxdataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
 
     def load_all(self, verbose=False):
         alldata = {}
@@ -38,11 +40,9 @@ class DataAggregator:
         if verbose: print(runlist)
 
         ## Now get datetimes of everything for comparison
-        min_dt = time.mktime(datetime(2000,1,1,0,0,0).timetuple()) if self.mindataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
-        max_dt = time.mktime(datetime(2100,1,1,0,0,0).timetuple()) if self.maxdataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
-        run_dt = [time.mktime(datetime.strptime(run, DATETIME_FMT).timetuple()) for run in runlist]
+        run_ts = np.array([time.mktime(datetime.strptime(run, DATETIME_FMT).timetuple()) for run in runlist])
 
-        run_idx = np.argwhere( (np.array(run_dt)>=min_dt) & (np.array(run_dt)<=max_dt) )
+        run_idx = np.argwhere( (run_ts>=self.mintimestamp) & (run_ts<=self.maxtimestamp) )
         goodruns = runlist[run_idx]
 
         return goodruns

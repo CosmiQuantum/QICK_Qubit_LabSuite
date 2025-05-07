@@ -59,12 +59,26 @@ def create_h5_dataset(name, value, group):
 
         if datatype == datetime.datetime:
             ## Do something
-            value = [time.mktime(vdt.timetuple()) for vdt in value]
-            datatype = type(value[0])
+            if len(datashape)==1:
+                value = [time.mktime(vdt.timetuple()) for vdt in value]
+                datatype = type(value[0])
+            if len(datashape)==2:
+                value = [ [time.mktime(vdt.timetuple()) for vdt in inner] for inner in value]
+                datatype = type(value[0][0])
+            if len(datashape)>2:
+                raise ValueError("The dimensionality of datetime data too high. Max 2D.")
+                return -1
         elif datatype == np.datetime64:
             ## Do something else
-            value = [vdt64.astype('datetime64[s]').astype('int64') for vdt64 in value]
-            datatype = type(value[0])
+            if len(datashape)==1:
+                value = [vdt64.astype('datetime64[s]').astype('int64') for vdt64 in value]
+                datatype = type(value[0])
+            if len(datashape)==2:
+                value = [ [vdt64.astype('datetime64[s]').astype('int64') for vdt in inner] for inner in value]
+                datatype = type(value[0][0])
+            if len(datashape)>2:
+                raise ValueError("The dimensionality of datetime data too high. Max 2D.")
+                return -1
         elif data_type == type(None):
             raise ValueError("The scalar data type is NoneType, skipping the write.")
             return -1
@@ -187,7 +201,7 @@ def load_h5_data(filename, data_type, save_r=1):
             for dataset_name in f[qubit_group].keys():
 
                 if dataset_name not in target_fields[data_type]:
-                    print(f"Warning: Key '{dataset_name}' not found in target data field list for data_type '{data_type}'. Skipping.")
+                    print(f"Warning: Key '{dataset_name}' for '{qubit_group}' not found in target data field list for data_type '{data_type}'. Skipping.")
 
                 else:
                     ## Copy the H5 dataset into the temporary dictionary for this qubit
@@ -244,11 +258,12 @@ def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps
 
     ## If this is the old format for data, handle the string and get an array
     if datatype == np.bytes_:
-        ## This is the old format of data
-        data = process_h5_data(data[0][0].decode())
+        ## De-dimensionalize the data since the structure is strange
+        for i in np.arange(len(datashape)):
+            data = data[0]
+        data = process_h5_data(data.decode())
+        # data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
     ## Otherwise, it should already be an np array not some string
-
-    # data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
 
     ## Now reshape the data if requested
     if (reps is not None) and (steps is not None):

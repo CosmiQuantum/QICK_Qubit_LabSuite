@@ -42,7 +42,7 @@ class DataAggregator:
         max_dt = time.mktime(datetime(2100,1,1,0,0,0).timetuple()) if self.maxdataset is None else time.mktime(datetime.strptime(self.mindataset, DATETIME_FMT).timetuple())
         run_dt = [time.mktime(datetime.strptime(run, DATETIME_FMT).timetuple()) for run in runlist]
 
-        run_idx = np.argwhere( (run_dt>=min_dt) & (run_dt<=max_dt) )
+        run_idx = np.argwhere( (np.array(run_dt)>=min_dt) & (np.array(run_dt)<=max_dt) )
         goodruns = runlist[run_idx]
 
         return goodruns

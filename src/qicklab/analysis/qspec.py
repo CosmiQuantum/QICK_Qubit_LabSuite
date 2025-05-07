@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 ## QICKLAB methods
-from ..datahandling.datafile_tools import load_h5_data, process_h5_data
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
 from .plot_tools import plot_qspec_simple
 from .fit_tools import fit_lorenzian
 
@@ -17,10 +17,7 @@ class qspec:
         self.folder = folder
 
     def load_all(self):
-        data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
-        h5_files.sort()
-        n = len(h5_files)
+        h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
         dates = []
         I = []

@@ -31,7 +31,7 @@ class DataAggregator:
         for path in fullpaths:
 
             ## Grab the dataset IDs in this substudy
-            runlist.append(os.listdir(path))
+            runlist += os.listdir(path) 
 
         runlist = np.sort(runlist)
         if verbose: print(runlist)

@@ -38,8 +38,8 @@ class DataAggregator:
         if verbose: print(runlist)
 
         ## Now get datetimes of everything for comparison
-        min_dt = datetime.datetime(2000,1,1,0,0,0) if self.mindataset is None else datetime.strptime(self.mindataset, DATETIME_FMT)
-        max_dt = datetime.datetime(2100,1,1,0,0,0) if self.maxdataset is None else datetime.strptime(self.mindataset, DATETIME_FMT)
+        min_dt = datetime(2000,1,1,0,0,0) if self.mindataset is None else datetime.strptime(self.mindataset, DATETIME_FMT)
+        max_dt = datetime(2100,1,1,0,0,0) if self.maxdataset is None else datetime.strptime(self.mindataset, DATETIME_FMT)
         run_dt = [datetime.strptime(run, DATETIME_FMT) for run in runlist]
 
         run_idx = np.argwhere( (run_dt>=min_dt) & (run_dt<=max_dt) )

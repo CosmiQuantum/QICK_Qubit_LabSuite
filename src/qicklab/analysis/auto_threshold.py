@@ -143,4 +143,6 @@ def auto_threshold_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, s
     auto = AnaAutoThreshold(data_dir, dataset, QubitIndex, ana_params=ana_params)
     data = auto.load_all()
     result = auto.run_analysis(verbose=True)
+    auto.cleanup()
+    del auto
     return result

@@ -32,13 +32,13 @@ if analysis_flags["get_threshold"]:
     data = auto.load_all()
     result = auto.run_analysis(verbose=True)
 
-    I_shots = data[data.keys()[0]]["I"]
-    Q_shots = data[data.keys()[0]]["Q"]
+    I_shots = data[next(iter(data))]["I"]
+    Q_shots = data[next(iter(data))]["Q"]
 
-    theta = result[data.keys()[0]]["theta"]
-    threshold = result[data.keys()[0]]["threshold"]
-    i_new = result[data.keys()[0]]["I_new"]
-    q_new = result[data.keys()[0]]["Q_new"]
+    theta = result[next(iter(result))]["theta"]
+    threshold = result[next(iter(result))]["threshold"]
+    i_new = result[next(iter(result))]["I_new"]
+    q_new = result[next(iter(result))]["Q_new"]
 
     auto.cleanup()
     del auto

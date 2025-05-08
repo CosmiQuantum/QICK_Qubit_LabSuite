@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from qicklab.analysis import qspec, t1, ssf, resstarkspec, starkspec, AnaAutoThreshold
+from qicklab.analysis import AnaQSpec, t1, ssf, resstarkspec, starkspec, AnaAutoThreshold
 from qicklab.utils import get_abs_min
 
 ############### set values here ###################

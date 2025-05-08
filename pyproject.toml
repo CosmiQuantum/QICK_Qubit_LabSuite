@@ -1,0 +1,50 @@
+# pyproject.toml
+
+[build-system]
+# XXX: If your project needs other packages to build properly, add them to this list.
+requires = [
+    "setuptools >= 42.0.0",
+    "setuptools-scm",
+    "matplotlib >= 3.9.4",
+    "visdom >= 0.2.4",
+    "numpy >= 2.0.2",
+    "tqdm >= 4.67.1",
+    "scipy >= 1.13.1",
+    "h5py >= 3.13.0",
+    "allantools",
+    "scikit-learn >= 1.6.1",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qicklab"
+authors = [
+    {name = "Joyce Christiansen-Salameh", email = "jc3496@cornell.edu"},
+    {name = "Olivia Seidel", email = "olivias@fnal.gov"},
+    {name = "Dylan J Temples", email = "dtemples@fnal.gov"},
+]
+description = "DAQ and Offline Analysis code for qubit readout with QICK."
+readme = "README.md"
+version = "0.2.0"
+requires-python = ">=3.9.21"
+
+# license = "BSD-3-Clause"
+# classifiers = [
+#     "Framework :: Django",
+#     "Programming Language :: Python :: 3",
+# ]
+# dependencies = [
+#     "requests",
+#     'importlib-metadata; python_version<"3.10"',
+# ]
+# dynamic = ["version"]
+
+# [project.optional-dependencies]
+# pdf = ["ReportLab>=1.2", "RXP"]
+# rest = ["docutils>=0.3", "pack ==1.1, ==1.3"]
+
+# [project.scripts]
+# my-script = "my_package.module:function"
+
+# ... other project metadata fields as listed in:
+#     https://packaging.python.org/en/latest/guides/writing-pyproject-toml/

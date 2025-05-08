@@ -1,0 +1,281 @@
+import os, h5py
+import time, datetime
+import numpy as np
+
+from ..utils.data_utils import unwrap_singleton_list
+
+
+DATETIME_FMT = "%Y-%m-%d_%H-%M-%S"
+
+def create_h5_dataset(name, value, group):
+    """
+    Create a dataset within an HDF5 group based on the given name and value.
+
+    The function handles different cases:
+      - If the dataset is named "Dates", it attempts to convert the value to a float64 array.
+      - If the value is a list and its first element indicates 'None', an empty array is created.
+      - Otherwise, it first attempts to convert non-floats to strings and then convert
+        to a float64 array. If that fails, it converts the value to a string array.
+      - If value is None, an empty dataset is created.
+
+    Parameters:
+        name (str): Name of the dataset.
+        value (any): The data to store.
+        group (h5py.Group): The HDF5 group in which to create the dataset.
+    """
+    ## Check that name/value are alright
+    if (type(name)!=type("")) or (value is None):
+        raise ValueError("name must be a string and value cannot be NoneType")
+        return -1
+
+    ## Check that we aren't trying to save a dictionary directly
+    if isinstance(value, dict):
+        raise ValueError("Cannot create a dataset directly from a dictionary.")
+        return -1
+
+    ## Get the shape of the data
+    datashape = np.shape(value)
+    testval   = value
+
+    ## This is a scalar value
+    if len(datashape)==0:
+        ## Save the numpy array of the data we want to write to h5
+        datatype  = type(testval)
+        writedata = np.array([value]).astype(datatype)
+    
+    ## This is a list/tuple/np.array (this is mutually exclusive so elif not needed)
+    if len(datashape)>0:
+        ## Note that casting a list of lists, or a list of tuples to an np array just works
+        ## and the resulting type is np.ndarray
+        ## Also if you have an np.ndarray and you re-cast it to an np.ndarray, it does nothing
+        ## Now we will loop over the shape of the data to pull out the first scalar value, for which
+        ## we will check its type
+        for i in np.arange(len(datashape)):
+            testval = testval[0]
+
+        ## Get the type of scalar data and create a numpy array from the input value
+        ## forcing it to be the correct datatype
+        datatype  = type(testval)
+
+        if datatype == datetime.datetime:
+            ## Do something
+            if len(datashape)==1:
+                value = [time.mktime(vdt.timetuple()) for vdt in value]
+                datatype = type(value[0])
+            if len(datashape)==2:
+                value = [ [time.mktime(vdt.timetuple()) for vdt in inner] for inner in value]
+                datatype = type(value[0][0])
+            if len(datashape)>2:
+                raise ValueError("The dimensionality of datetime data too high. Max 2D.")
+                return -1
+        elif datatype == np.datetime64:
+            ## Do something else
+            if len(datashape)==1:
+                value = [vdt64.astype('datetime64[s]').astype('int64') for vdt64 in value]
+                datatype = type(value[0])
+            if len(datashape)==2:
+                value = [ [vdt64.astype('datetime64[s]').astype('int64') for vdt in inner] for inner in value]
+                datatype = type(value[0][0])
+            if len(datashape)>2:
+                raise ValueError("The dimensionality of datetime data too high. Max 2D.")
+                return -1
+        elif data_type == type(None):
+            raise ValueError("The scalar data type is NoneType, skipping the write.")
+            return -1
+
+        ## Save the numpy array of the data we want to write to h5
+        writedata = np.array(value).astype(datatype)
+
+    ## Show the user a warning if for some reason the data is being saved as a string
+    if datatype == type(""): 
+         print("WARNING: Writing data for "+name+" as a string. Check that this is intended!")
+
+    ## Now try to write the data
+    try:
+        group.create_dataset(name, data=writedata)
+    except Exception as e:
+        print("Error: ",e)
+        return -1
+
+    return writedata
+
+def save_to_h5(data, outer_folder_expt, data_type, batch_num, save_r):
+    """
+    Save data to an HDF5 file with a timestamped filename.
+
+    The function creates the destination folder if it does not exist. It generates a filename
+    containing the current date/time, data type, batch number, and a replication factor. It then
+    iterates over the provided data (organized per qubit) and saves each dataset within its respective
+    group.
+
+    Parameters:
+        data (dict): Nested dictionary where each key corresponds to a qubit index and the value is a 
+                     dictionary of dataset names and data.
+        outer_folder_expt (str): Path to the folder where the HDF5 file should be saved.
+        data_type (str): A descriptor for the type of data (used in filename and attributes).
+        batch_num (int or str): Batch number to include in the filename and file attributes.
+        save_r (int or str): Replication factor for the number of items per batch (included in filename and attributes).
+    """
+    # Ensure the output directory exists.
+    os.makedirs(outer_folder_expt, exist_ok=True)
+    # Create a formatted datetime string for uniqueness.
+    formatted_datetime = datetime.datetime.now().strftime(DATETIME_FMT)
+    # Construct the filename with provided parameters.
+    h5_filename = os.path.join(outer_folder_expt,
+                               f"{formatted_datetime}_{data_type}_results_batch_{batch_num}_Num_per_batch{save_r}.h5")
+
+    # Write the data to the HDF5 file.
+    with h5py.File(h5_filename, 'w') as f:
+        # Store file-level attributes.
+        f.attrs['datestr'] = formatted_datetime
+        f.attrs[f'{data_type}_results_batch'] = batch_num
+        f.attrs['num_per_batch'] = save_r
+        # Iterate over each qubit's data.
+        for QubitIndex, qubit_data in data.items():
+            # Create a group for each qubit (named Q1, Q2, etc.)
+            group = f.create_group(f'Q{QubitIndex + 1}')
+            # Create datasets within the qubit group.
+            for key, value in qubit_data.items():
+                create_h5_dataset(key, value, group)
+
+def find_h5_files(basepath, dataset, expt_name, folder="study_data", verbose=False):
+    data_path = os.path.join(basepath, dataset, folder, "Data_h5", expt_name)
+    h5_files = np.sort(os.listdir(data_path)).tolist()
+    if verbose:
+        print(data_path)
+        for f in h5_files: print("",f)
+    return h5_files, data_path, len(h5_files)
+
+def load_h5_data(filename, data_type, save_r=1):
+    """
+    Save data to an HDF5 file with a timestamped filename.
+    Hybrid version of Joyce and Olivias two methods, authored by Dylan
+
+    The function creates the destination folder if it does not exist. It generates a filename
+    containing the current date/time, data type, batch number, and a replication factor. It then
+    iterates over the provided data (organized per qubit) and saves each dataset within its respective
+    group.
+
+    Parameters:
+        data (dict): Nested dictionary where each key corresponds to a qubit index and the value is a 
+                     dictionary of dataset names and data.
+        outer_folder_expt (str): Path to the folder where the HDF5 file should be saved.
+        data_type (str): A descriptor for the type of data (used in filename and attributes).
+        batch_num (int or str): Batch number to include in the filename and file attributes.
+        save_r (int or str): Replication factor for the number of items per batch (included in filename and attributes).
+    """
+
+    data = {data_type: {}}  # Initialize the main output dictionary with the data_type.
+
+    ## Define the target data fields, necessary if by-shot data is saved
+    global_fields = ['Dates', 'Round Num', 'Batch Num', 'Exp Config', 'Syst Config']
+    target_fields = {
+        "Res": ['freq_pts', 'freq_center', 'Amps', 'Found Freqs']+global_fields,
+        "QSpec": ['I', 'Q', 'Frequencies', 'I Fit', 'Q Fit', 'Recycled QFreq', 'P', 'Gain Sweep']+global_fields,
+        "Ext_QSpec": ['I', 'Q', 'Frequencies']+global_fields,
+        "Rabi": ['I', 'Q', 'Gains', 'Fit']+global_fields,
+        "SS": ['Fidelity', 'Angle', 'I_g', 'Q_g', 'I_e', 'Q_e']+global_fields,
+        "T1": ['T1', 'Errors', 'I', 'Q', 'Delay Times', 'Fit']+global_fields,
+        "T2": ['T2', 'Errors', 'I', 'Q', 'Delay Times', 'Fit']+global_fields,
+        "T2E": ['T2E', 'Errors', 'I', 'Q', 'Delay Times', 'Fit']+global_fields,
+        "stark2D": ['I', 'Q', 'Qu Frequency Sweep', 'Res Gain Sweep']+global_fields,
+        "starkSpec": ['I', 'Q', 'P', 'shots', 'Gain Sweep']+global_fields,
+    }
+
+    ## Open the file for pulling the data
+    with h5py.File(filename, 'r') as f:
+        
+        ## Loop over all the top-level keys in the file (i.e., Qubit index)
+        for qubit_group in f.keys():
+            
+            ## Convert group name (e.g., "Q1") to a zero-based index.
+            qubit_index = int(qubit_group[1:]) - 1
+            
+            qubit_data = {} ## temporary container for output
+            
+            ## If this is a data type that is not defined, throw an error
+            if data_type not in target_fields.keys():
+                raise ValueError(f"Unsupported data_type: {data_type}")
+
+            ## Now check all the keys in this data group (i.e., for this qubit)
+            for dataset_name in f[qubit_group].keys():
+
+                if dataset_name not in target_fields[data_type]:
+                    print(f"Warning: Key '{dataset_name}' for '{qubit_group}' not found in target data field list for data_type '{data_type}'. Skipping.")
+
+                else:
+                    ## Copy the H5 dataset into the temporary dictionary for this qubit
+                    qubit_data[dataset_name] = unwrap_singleton_list([f[qubit_group][dataset_name][()]] * save_r)
+
+            ## Save this qubit's full data dict to our output container
+            data[data_type][qubit_index] = qubit_data
+
+    return data
+
+def process_h5_data(data):
+    """
+    Process a string containing numeric data by filtering out unwanted characters.
+
+    The function removes newline characters and keeps only digits, minus signs, dots, spaces, and the letter 'e'
+    (for exponential notation), then converts the resulting tokens to floats.
+
+    Parameters:
+        data (str): String containing numeric data.
+
+    Returns:
+        numbers: A list of floats extracted from the string.
+    """
+    # Check if the data is a byte string; decode if necessary.
+    if isinstance(data, bytes):
+        data_str = data.decode()
+    elif isinstance(data, str):
+        data_str = data
+    else:
+        raise ValueError("Unsupported data type. Data should be bytes or string.")
+
+    data_str = data_str.strip().replace('\n', ' ')
+
+    # Remove extra whitespace and non-numeric characters.
+    cleaned_data = ''.join(c for c in data_str if c.isdigit() or c.lower() in ['+', '-', '.', ' ', 'e'])
+
+    # Split into individual numbers, removing empty strings.
+    numbers = [float(x) for x in cleaned_data.split() if x]
+    return numbers
+
+def get_data_field(data_dict, expt_name, qubit_idx, data_field, steps=None, reps=None, verbose=False):
+    
+    ## Pull the field of interest out of the full dictionary
+    data = data_dict[expt_name][int(qubit_idx)][data_field]
+
+    ## Determine shape and type of the data that we want to return
+    datashape = np.shape(data)
+    testval   = data
+    for i in np.arange(len(datashape)):
+        testval = testval[0]
+    datatype  = type(testval)
+
+    if verbose: print(data_field, datashape, datatype)
+
+    ## If this is the old format for data, handle the string and get an array
+    if datatype == np.bytes_:
+        ## De-dimensionalize the data since the structure is strange
+        for i in np.arange(len(datashape)):
+            data = data[0]
+        data = process_h5_data(data.decode())
+        # data = process_h5_data(data_dict[expt_name][int(qubit_idx)].get(data_field, [])[0][0].decode())
+    ## Otherwise, it should already be an np array not some string
+
+    ## Now reshape the data if requested
+    if (reps is not None) and (steps is not None):
+        return np.array(data).reshape([steps, reps])
+    else:
+        return np.array(data)
+
+# def get_gainsweep(data_dict, expt_name, qubit_idx, data_field, steps=None, reps=None):
+
+
+
+
+
+
+

@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 
 from sklearn.cluster import KMeans
 
+## QICKLAB methods
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
 from ..utils.ana_utils  import rotate_and_threshold
-from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
 from .plot_tools import plot_shots
 
 class auto_threshold:
@@ -22,17 +22,29 @@ class auto_threshold:
         self.folder = folder
 
     def load_sample(self, idx=0):
-        data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
-        h5_files.sort()
+        h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
-        gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
+        ## Load the H5 data into a dictionary
+        load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
+
+        ## Pull the gain sweep info and determine how many steps there are
+        gain_sweep = get_data_field(load_data, 'starkSpec', self.QubitIndex, 'Gain Sweep')
+
+        # gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
         step_idx = int(steps/2)
-        reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
-        I_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape([steps, reps])
-        Q_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Q', [])[0][0].decode())).reshape([steps, reps])
+
+        ## Load the I and Q data
+        I_shots = get_data_field(load_data, 'starkSpec', self.QubitIndex, 'I')
+        Q_shots = get_data_field(load_data, 'starkSpec', self.QubitIndex, 'Q')
+        reps = int(len(I_shots) / steps)
+
+        I_shots = I_shots.reshape([steps, reps])
+        Q_shots = Q_shots.reshape([steps, reps])
+
+        # reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
+        # I_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape([steps, reps])
+        # Q_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Q', [])[0][0].decode())).reshape([steps, reps])
 
         return I_shots[step_idx], Q_shots[step_idx]
 

@@ -1,7 +1,7 @@
 ## High level tools go here
 from .h5_data import *
 
-## Backend processing low-level tools go here
+## Backend analysis low-level tools go here
 from .fit_functions import *
 from .fit_tools import *
 from .plot_tools import *

@@ -118,6 +118,9 @@ if analysis_flags["load_all_data"]:
     data = rstark.load_all()
     result = rstark.run_analysis(verbose=True)
 
+    print( np.mean(data["I"]), np.std(data["I"]) )
+    print( np.mean(data["Q"]), np.std(data["Q"]) )
+
     rstark_dates = data["dates"]
     rstark_n = data["n"]
     rstark_gains = data["gain_sweep"]

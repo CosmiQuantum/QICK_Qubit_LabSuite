@@ -111,7 +111,10 @@ class AnaResStarkSpec(AnalysisClass):
         _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
 
     def process_shots(self, I_shots, Q_shots, n, steps):
-        return process_shots(I_shots, Q_shots, n, steps, self.theta, self.threshold, thresholding=self.thresholding)
+        return process_shots(I_shots, Q_shots, n, steps, 
+            self.ana_params["theta"], 
+            self.ana_params["threshold"], 
+            thresholding=True if "thresholding" not in self.ana_params.keys() else self.ana_params["thresholding"])
 
     def gain2freq(self, gains):
         return gain2freq_resonator(gains, self.stark_constant)

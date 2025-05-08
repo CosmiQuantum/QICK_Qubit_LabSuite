@@ -124,7 +124,7 @@ if analysis_flags["load_all_data"]:
     rstark_p_excited = result["rstark_p_excited"]
     rstark_freqs = result["rstark_freqs"]
 
-    rstark.cleanup()
+    # rstark.cleanup()
     
     ## =============================== Stark Spec =============================== ##
     print("Loading detuning Stark spec data...")

@@ -2,9 +2,7 @@ import os, datetime
 import numpy as np
 
 from scipy.optimize import curve_fit
-
-from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
 from .data_tools import get_h5_for_qubit
 
 class rspec:
@@ -26,12 +24,12 @@ class rspec:
         rspec_freqs = []
         rspec_freq_centers = []
         rspec_mags = []
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'Res', save_r=1)
+        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'Res', save_r=1)
         rspec_probe_freqs = process_h5_data(load_data['Res'][self.QubitIndex].get('freq_pts', [])[0][0].decode())
         mag_idx = np.array(np.arange(0, len(rspec_probe_freqs)) + self.QubitIndex * len(rspec_probe_freqs))
 
         for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'Res', save_r=1)
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'Res', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['Res'][self.QubitIndex].get('Dates', [])[0][0]))
             rspec_mag0 = process_h5_data(load_data['Res'][self.QubitIndex].get('Amps', [])[0][0].decode())
             rspec_mags.append(np.array(rspec_mag0)[mag_idx])

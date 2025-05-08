@@ -5,8 +5,7 @@ from scipy.optimize import curve_fit
 
 from .fit_functions import cosine
 from .fit_tools import fit_amp_rabi
-from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
 from .data_tools import get_h5_for_qubit
 
 
@@ -30,11 +29,11 @@ class amp_rabi:
         I = []
         Q = []
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'Rabi', save_r=1)
+        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'Rabi', save_r=1)
         gains = process_h5_data(load_data['Rabi'][self.QubitIndex].get('Gains', [])[0][0].decode())
 
         for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'Rabi', save_r=1)
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'Rabi', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['Rabi'][self.QubitIndex].get('Dates', [])[0][0]))
             I.append(process_h5_data(load_data['Rabi'][self.QubitIndex].get('I', [])[0][0].decode()))
             Q.append(process_h5_data(load_data['Rabi'][self.QubitIndex].get('Q', [])[0][0].decode()))

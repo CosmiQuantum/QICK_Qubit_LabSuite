@@ -24,22 +24,14 @@ class qspec:
         I = []
         Q = []
 
-        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
-
         for i,h5_file in enumerate(h5_files):
 
             load_data = load_h5_data(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
             if i==0: qspec_probe_freqs = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Frequencies')
-
             timestamps = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Dates')
-            # dates.append(datetime.datetime.fromtimestamp(timestamps))
             I.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'I'))
             Q.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'Q'))
-
             dates.append(datetime.datetime.fromtimestamp(load_data['QSpec'][self.QubitIndex].get('Dates', [])[0][0]))
-
-            # I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))
-            # Q.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('Q', [])[0][0].decode())))
 
         return dates, n, qspec_probe_freqs, I, Q
 

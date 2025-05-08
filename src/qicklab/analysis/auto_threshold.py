@@ -49,7 +49,7 @@ class AnaAutoThreshold(AnalysisClass):
         ## Load the selected H5 data into a dictionary
         load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), self.datagroup, save_r=1)
 
-        print(load_data.keys(), ":", load_data[next(iter(load_data))].keys())
+        print(load_data[self.datagroup].keys(), ":", load_data[self.datagroup][self.qubit_index].keys())
 
         ## Pull the gain sweep info and determine how many steps there are
         gain_sweep = get_data_field(load_data, self.datagroup, self.qubit_index, 'Gain Sweep')

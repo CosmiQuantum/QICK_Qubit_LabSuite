@@ -109,7 +109,7 @@ if analysis_flags["load_all_data"]:
         "theta": theta,
         "threshold": threshold,
         "stark_constant": res_stark_constant[QubitIndex],
-        "thresholding": False
+        "thresholding": True
     }
 
     rstark = AnaResStarkSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)

@@ -108,8 +108,8 @@ class AnaQSpec(AnalysisClass):
 
         if plot:
 
-            title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
-                     f'rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[idx],2)} us')
+            title = (f'dataset {self.dataset} qubit {self.qubit_index} round {round + 1} of {n}: ' +
+                     f'rotated I,Q shots for t1_ge at delay time: {np.round(delay_times[round],2)} us')
 
             _, _ = plot_qspec_simple(qspec_probe_freqs, thisI, thisQ, fitcurve=qspec_fit, title=title)
 

@@ -56,8 +56,8 @@ class AnaResStarkSpec(AnalysisClass):
 
             ## For every file add its I, Q, and P
             timestamps = get_data_field(load_data, self.datagroup, self.qubit_index, 'Dates')
-            I_shots.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'I'), steps=steps, reps=reps)
-            Q_shots.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'Q'), steps=steps, reps=reps)
+            I_shots.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'I', steps=steps, reps=reps))
+            Q_shots.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'Q', steps=steps, reps=reps))
             P.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'P'))
 
             dates.append(datetime.datetime.fromtimestamp(load_data[self.datagroup][self.qubit_index].get('Dates', [])[0][0]))

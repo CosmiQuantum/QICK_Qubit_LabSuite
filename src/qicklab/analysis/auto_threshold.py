@@ -19,7 +19,7 @@ class AnaAutoThreshold(AnalysisClass):
     required_ana_keys = []
     optional_ana_keys = ["idx", "plot"]
 
-    def __init__(self, data_dir, dataset, qubit_index, folder="study_data", expt_name="qspec_ge", datagroup='starkSpec', ana_params={}):
+    def __init__(self, data_dir, dataset, qubit_index, folder="study_data", expt_name="starkspec_ge", datagroup='starkSpec', ana_params={}):
         
         ## Save the arguments to the class
         self.data_dir = data_dir
@@ -46,17 +46,13 @@ class AnaAutoThreshold(AnalysisClass):
         ## Determine which file we care aboout
         idx = 0 if "idx" not in self.ana_params.keys() else int(self.ana_params["idx"])
 
-        print(idx, h5_files[idx])
-
         ## Load the selected H5 data into a dictionary
-        # load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), self.datagroup, save_r=1)
-        load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
-
-        # print(load_data[self.datagroup].keys(), ":", load_data[self.datagroup][self.qubit_index].keys())
+        load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), self.datagroup, save_r=1)
+        # load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
 
         ## Pull the gain sweep info and determine how many steps there are
-        # gain_sweep = get_data_field(load_data, self.datagroup, self.qubit_index, 'Gain Sweep')
-        gain_sweep = get_data_field(load_data, 'starkSpec', self.qubit_index, 'Gain Sweep')
+        gain_sweep = get_data_field(load_data, self.datagroup, self.qubit_index, 'Gain Sweep')
+        # gain_sweep = get_data_field(load_data, 'starkSpec', self.qubit_index, 'Gain Sweep')
 
         # gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)

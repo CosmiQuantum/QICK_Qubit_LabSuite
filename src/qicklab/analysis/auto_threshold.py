@@ -69,7 +69,7 @@ class AnaAutoThreshold(AnalysisClass):
 
         ## Save the necessary data to the dictionary
         analysis_data["I"] = I_shots[step_idx]
-        analysis_data["Q"] = Q_shots[step_idx],
+        analysis_data["Q"] = Q_shots[step_idx]
 
         ## Save the output dictionary to the class instance and then return it
         self.analysis_data = analysis_data

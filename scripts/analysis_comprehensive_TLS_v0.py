@@ -28,7 +28,8 @@ if analysis_flags["get_threshold"]:
         "plot": True,
     }
 
-    auto = AnaAutoThreshold(data_dir, dataset, QubitIndex, ana_params=ana_params)
+    auto = AnaAutoThreshold(data_dir, dataset, QubitIndex, datagroup='starkSpec', ana_params=ana_params)
+
     data = auto.load_all()
     result = auto.run_analysis(verbose=True)
 

@@ -24,7 +24,7 @@ if analysis_flags["get_threshold"]:
 
     ana_params = {
         "idx" : 0,
-        "plot": True,
+        "plot": False,
     }
 
     auto = AnaAutoThreshold(data_dir, dataset, QubitIndex, ana_params=ana_params)
@@ -49,7 +49,7 @@ if analysis_flags["load_all_data"]:
     print("Loading qspec data...")
 
     ana_params = {
-        "plot_idxs": selected_round,
+        "plot_idxs": [],#selected_round,
     }
 
     qspec_ge = AnaQSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)
@@ -87,7 +87,7 @@ if analysis_flags["load_all_data"]:
     print("Loading HGqspec data...")
 
     ana_params = {
-        "plot_idxs": selected_round,
+        "plot_idxs": [],#selected_round,
     }
 
     hgqspec = AnaQSpec(data_dir, dataset, QubitIndex, expt_name="high_gain_qspec_ge", ana_params=ana_params)

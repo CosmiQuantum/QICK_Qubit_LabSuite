@@ -62,13 +62,13 @@ if analysis_flags["load_all_data"]:
     qspec_probe_freqs = data["qspec_probe_freqs"]
     qspec_I = data["I"]
     qspec_Q = data["Q"]
+    qspec_mag = np.sqrt(np.square(qspec_I)+np.square(qspec_Q))
 
     qspec_freqs = result["qspec_freqs"]
     qspec_errs = result["qspec_errs"]
     qspec_fwhms = result["qspec_fwhms"]
 
     qspec_ge.cleanup()
-    del qspec_ge
 
     ## =============================== SSF =============================== ##
     print("Loading SSF data...")
@@ -101,7 +101,6 @@ if analysis_flags["load_all_data"]:
     hgqspec_mag = np.sqrt(np.square(hgqspec_I) + np.square(hgqspec_Q))
 
     hgqspec.cleanup()
-    del hgqspec
 
     ## =============================== ResStark Spec =============================== ##
     print("Loading resonator Stark spec data...")
@@ -124,7 +123,6 @@ if analysis_flags["load_all_data"]:
     rstark_freqs = result["rstark_freqs"]
 
     rstark.cleanup()
-    del rstark
     
     ## =============================== Stark Spec =============================== ##
     print("Loading detuning Stark spec data...")
@@ -207,7 +205,6 @@ if analysis_flags['round']:
 
     for round in selected_round:
         ##### qspec data ####
-        qspec_mag = np.sqrt(np.square(qspec_I)+np.square(qspec_Q))
         qfreq, qfreq_err, fwhm, qspec_fit = qspec_ge.get_qspec_freq_in_round(qspec_probe_freqs, qspec_I, qspec_Q, round, qspec_n, plot=False)
 
         plot = ax[0][0]

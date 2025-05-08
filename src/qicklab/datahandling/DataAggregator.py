@@ -70,7 +70,7 @@ class DataAggregator:
             ndatasets = self.ndatasets
 
         ## Confirm the presence of required keys in analysis parameters
-        required_keys = ["name"]
+        required_keys = ["name", "datagroup"]
         optional_keys = ["folder"]
         for req_key in required_keys:
             if req_key not in analysis_params.keys(): 
@@ -86,6 +86,7 @@ class DataAggregator:
             anaClass = AnalysisClass(datapath, dataset, qubit_index, 
                 folder = "study_data" if ("folder" not in analysis_params.keys()) else analysis_params["folder"], 
                 expt_name = analysis_params["name"], 
+                datagroup = analysis_params["datagroup"],
                 ana_params = analysis_params )
 
             ## Load the required data for this analysis, and run it

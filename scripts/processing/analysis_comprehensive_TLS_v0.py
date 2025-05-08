@@ -75,6 +75,7 @@ if analysis_flags["load_all_data"]:
     ssf_ge = ssf(data_dir, dataset, QubitIndex)
     ssf_dates, ssf_n, I_g, Q_g, I_e, Q_e, fid, angles = ssf_ge.load_all()
 
+    ## =============================== T1 =============================== ##
     print("Loading T1 data...")
     t1_ge = t1(data_dir, dataset, QubitIndex, theta, threshold)
     t1_dates, t1_n, delay_times, t1_steps, t1_reps, t1_I_shots, t1_Q_shots = t1_ge.load_all()
@@ -90,8 +91,8 @@ if analysis_flags["load_all_data"]:
 
     hgqspec = AnaQSpec(data_dir, dataset, QubitIndex, expt_name="high_gain_qspec_ge", ana_params=ana_params)
     
-    data = qspec_ge.load_all()
-    result = qspec_ge.run_analysis(verbose=True)
+    data = hgqspec.load_all()
+    result = hgqspec.run_analysis(verbose=True)
 
     hgqspec_dates = data["dates"]
     hgqspec_probe_freqs = data["qspec_probe_freqs"]
@@ -99,10 +100,10 @@ if analysis_flags["load_all_data"]:
     hgqspec_Q = data["Q"]
     hgqspec_mag = np.sqrt(np.square(hgqspec_I) + np.square(hgqspec_Q))
 
-    qspec_ge.cleanup()
-    del qspec_ge
+    hgqspec.cleanup()
+    del hgqspec
 
-    ## =============================== ResStark =============================== ##
+    ## =============================== ResStark Spec =============================== ##
     print("Loading resonator Stark spec data...")
     ana_params = {
         "theta": theta,
@@ -125,7 +126,7 @@ if analysis_flags["load_all_data"]:
     rstark.cleanup()
     del rstark
     
-
+    ## =============================== Stark Spec =============================== ##
     print("Loading detuning Stark spec data...")
     stark = starkspec(data_dir, dataset, QubitIndex, duffing_constant[QubitIndex], theta, threshold, anharmonicity[QubitIndex], detuning[QubitIndex])
     stark_dates, stark_n, stark_gains, stark_steps, stark_reps, stark_I_shots, stark_Q_shots, stark_P = stark.load_all()

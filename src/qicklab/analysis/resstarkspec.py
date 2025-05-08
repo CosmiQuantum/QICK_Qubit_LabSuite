@@ -44,7 +44,7 @@ class AnaResStarkSpec(AnalysisClass):
 
         ## For each file in the dataset, load the data, pull specific data fields,
         ## and save it to the output dictonary.
-        for h5_file in h5_files:
+        for i,h5_file in enumerate(h5_files):
 
             ## Load the selected H5 data into a dictionary, pull the frequency info from the first one
             load_data = load_h5_data(os.path.join(data_path, h5_file), self.datagroup, save_r=1)

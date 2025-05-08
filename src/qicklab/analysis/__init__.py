@@ -8,7 +8,9 @@ from .plot_tools import *
 from .shot_tools import *
 from .stark_tools import *
 
+
 ## Specific analysis classes go here
+from .AnalysisClass import AnalysisClass
 from .auto_threshold import auto_threshold, auto_threshold_demo
 from .rspec import rspec
 from .qspec import qspec, qspec_demo

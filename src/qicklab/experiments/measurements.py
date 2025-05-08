@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from ..config.expt_config import expt_cfg
+from ..config.ExperimentConfig import expt_cfg
 #from ..config.round_robin_config import save_figs
 from ..hardware.build_state import all_qubit_state
 from ..hardware.qick_programs import SingleToneSpectroscopyProgram

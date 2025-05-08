@@ -2,9 +2,9 @@ import os, datetime
 
 import numpy as np
 
+## QICKLAB methods
+from ..datahandling.datafile_tools import load_h5_data, process_h5_data
 from ..utils.ana_utils  import rotate_and_threshold
-from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
 from .data_tools import get_h5_for_qubit
 
 class ssf:
@@ -29,7 +29,7 @@ class ssf:
         Q_e = []
 
         for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'SS', save_r=1)
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'SS', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['SS'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_g.append(process_h5_data(load_data['SS'][self.QubitIndex].get('I_g', [])[0][0].decode()))

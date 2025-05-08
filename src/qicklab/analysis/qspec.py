@@ -3,8 +3,8 @@ import numpy as np
 
 from scipy.optimize import curve_fit
 
-from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
+## QICKLAB methods
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
 from .plot_tools import plot_qspec_simple
 from .fit_tools import fit_lorentzian
 from .data_tools import get_h5_for_qubit
@@ -18,25 +18,28 @@ class qspec:
         self.folder = folder
 
     def load_all(self):
-        data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files_all_qubits = os.listdir(data_path)
-        h5_files = get_h5_for_qubit(data_path, h5_files_all_qubits, self.QubitIndex, 'QSpec')
-        h5_files.sort()
-        n = len(h5_files)
+        h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
         dates = []
         I = []
         Q = []
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
-        qspec_probe_freqs = process_h5_data(load_data['QSpec'][self.QubitIndex].get('Frequencies', [])[0][0].decode())
+        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
 
-        for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
+        for i,h5_file in enumerate(h5_files):
+
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
+            if i==0: qspec_probe_freqs = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Frequencies')
+
+            timestamps = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Dates')
+            # dates.append(datetime.datetime.fromtimestamp(timestamps))
+            I.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'I'))
+            Q.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'Q'))
+
             dates.append(datetime.datetime.fromtimestamp(load_data['QSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
-            I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))
-            Q.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('Q', [])[0][0].decode())))
+            # I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))
+            # Q.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('Q', [])[0][0].decode())))
 
         return dates, n, qspec_probe_freqs, I, Q
 

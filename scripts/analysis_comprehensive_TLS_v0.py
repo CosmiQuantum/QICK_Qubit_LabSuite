@@ -33,24 +33,46 @@ if analysis_flags["get_threshold"]:
     data = auto.load_all()
     result = auto.run_analysis(verbose=True)
 
-    I_shots = data[next(iter(data))]["I"]
-    Q_shots = data[next(iter(data))]["Q"]
+    I_shots = data["I"]
+    Q_shots = data["Q"]
 
-    theta = result[next(iter(result))]["theta"]
-    threshold = result[next(iter(result))]["threshold"]
-    i_new = result[next(iter(result))]["I_new"]
-    q_new = result[next(iter(result))]["Q_new"]
+    theta = result["theta"]
+    threshold = result["threshold"]
+    i_new = result["I_new"]
+    q_new = result["Q_new"]
 
     auto.cleanup()
     del auto
 
 if analysis_flags["load_all_data"]:
+    
+    ## =============================== QSPEC =============================== ##
     print("Loading qspec data...")
-    qspec_ge = qspec(data_dir, dataset, QubitIndex)
-    qspec_dates, qspec_n, qspec_probe_freqs, qspec_I, qspec_Q = qspec_ge.load_all()
-    qspec_freqs, qspec_errs, qspec_fwhms = qspec_ge.get_all_qspec_freq(qspec_probe_freqs, qspec_I, qspec_Q, qspec_n)
-    start_time = qspec_dates[0]
 
+    ana_params = {
+        "plot_idxs": selected_round,
+    }
+
+    qspec_ge = AnaQSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)
+    
+    data = qspec_ge.load_all()
+    result = qspec_ge.run_analysis(verbose=True)
+
+
+    start_time = data["dates"][0]
+    qspec_dates = data["dates"]
+    qspec_probe_freqs = data["qspec_probe_freqs"]
+    qspec_I = data["I"]
+    qspec_Q = data["Q"]
+
+    qspec_freqs = result["qspec_freqs"]
+    qspec_errs = result["qspec_errs"]
+    qspec_fwhms = result["qspec_fwhms"]
+
+    qspec_ge.cleanup()
+    del qspec_ge
+
+    ## =============================== SSF =============================== ##
     print("Loading SSF data...")
     ssf_ge = ssf(data_dir, dataset, QubitIndex)
     ssf_dates, ssf_n, I_g, Q_g, I_e, Q_e, fid, angles = ssf_ge.load_all()

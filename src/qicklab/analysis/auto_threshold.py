@@ -68,10 +68,8 @@ class AnaAutoThreshold(AnalysisClass):
         Q_shots = Q_shots.reshape([steps, reps])
 
         ## Save the necessary data to the dictionary
-        analysis_data[h5_files[idx]] = {
-                "I": I_shots[step_idx],
-                "Q": Q_shots[step_idx],
-            }
+        analysis_data["I"] = I_shots[step_idx]
+        analysis_data["Q"] = Q_shots[step_idx],
 
         ## Save the output dictionary to the class instance and then return it
         self.analysis_data = analysis_data
@@ -83,20 +81,17 @@ class AnaAutoThreshold(AnalysisClass):
 
         ## For each file in the dataset, use the information saved in self.analysis data to
         ## do something, and save it to the output dictonary.
-        for k in self.analysis_data.keys():
 
-            theta, threshold, i_new, q_new = self.get_threshold(
-                self.analysis_data[k]["I"] , 
-                self.analysis_data[k]["Q"] , 
-                plot=False if "plot" not in self.ana_params.keys() else self.ana_params["plot"], 
-                verbose=verbose)
+        theta, threshold, i_new, q_new = self.get_threshold(
+            self.analysis_data["I"] , 
+            self.analysis_data["Q"] , 
+            plot=False if "plot" not in self.ana_params.keys() else self.ana_params["plot"], 
+            verbose=verbose)
 
-            analysis_result[k] = {
-                "theta": theta,
-                "threshold": threshold,
-                "I_new": i_new,
-                "Q_new": q_new,
-            }
+        analysis_result["theta"] = theta
+        analysis_result["threshold"] = threshold
+        analysis_result["I_new"] = i_new
+        analysis_result["Q_new"] = q_new
 
         ## Save the output dictionary to the class instance and then return it
         self.analysis_result = analysis_result

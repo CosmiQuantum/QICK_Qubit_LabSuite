@@ -4,43 +4,94 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 ## QICKLAB methods
-from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
+from ..datahandling.datafile_tools import find_h5_files, load_h5_data, get_data_field
 from .plot_tools import plot_qspec_simple
 from .fit_tools import fit_lorenzian
+from .AnalysisClass import AnalysisClass
 
-class qspec:
-    def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):
+class AnaQSpec(AnalysisClass):
+
+    required_ana_keys = []
+    optional_ana_keys = ["plot_idxs"]
+
+    def __init__(self, data_dir, dataset, qubit_index, folder="study_data", expt_name="qspec_ge", datagroup='QSpec', ana_params={}):
+        
+        ## Save the arguments to the class
         self.data_dir = data_dir
         self.dataset = dataset
-        self.QubitIndex = QubitIndex
+        self.datagroup = datagroup
+        self.qubit_index = qubit_index
         self.expt_name = expt_name
         self.folder = folder
 
-    def load_all(self):
+        ## Check the analysis params keys against the required keys
+        for req_key in self.required_ana_keys:
+            if req_key not in ana_params.keys(): 
+                raise KeyError("ERROR: required keys not found in ana_params: "+",".join(self.required_ana_keys))
+        self.ana_params = ana_params
+
+    def load_all(self, verbose=False):
+        ## Create a container for the output
+        analysis_data = {}
+
+        ## Find all the H5 files for this dataset
         h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
         dates = []
         I = []
         Q = []
 
-        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
-
+        ## For each file in the dataset, load the data, pull specific data fields,
+        ## and save it to the output dictonary.
         for i,h5_file in enumerate(h5_files):
 
-            load_data = load_h5_data(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
-            if i==0: qspec_probe_freqs = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Frequencies')
+            ## Load the selected H5 data into a dictionary, pull the frequency info from the first one
+            load_data = load_h5_data(os.path.join(data_path, h5_file), self.datagroup, save_r=1)
+            if i==0: qspec_probe_freqs = get_data_field(load_data, self.datagroup, self.qubit_index, 'Frequencies')
 
-            timestamps = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Dates')
-            # dates.append(datetime.datetime.fromtimestamp(timestamps))
-            I.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'I'))
-            Q.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'Q'))
+            ## For every file add its I and Q
+            timestamps = get_data_field(load_data, self.datagroup, self.qubit_index, 'Dates')
+            I.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'I'))
+            Q.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'Q'))
 
-            dates.append(datetime.datetime.fromtimestamp(load_data['QSpec'][self.QubitIndex].get('Dates', [])[0][0]))
+            dates.append(datetime.datetime.fromtimestamp(load_data[self.datagroup][self.qubit_index].get('Dates', [])[0][0]))
 
-            # I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))
-            # Q.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('Q', [])[0][0].decode())))
+        # return dates, n, qspec_probe_freqs, I, Q
 
-        return dates, n, qspec_probe_freqs, I, Q
+        ## Save the necessary data to the dictionary
+        analysis_data["dates"] = dates
+        analysis_data["n"] = n
+        analysis_data["qspec_probe_freqs"] = qspec_probe_freqs
+        analysis_data["I"] = I
+        analysis_data["Q"] = Q
+
+        ## Save the output dictionary to the class instance and then return it
+        self.analysis_data = analysis_data
+        return analysis_data
+
+    def run_analysis(self, verbose=False):
+        ## Create a container for the output
+        analysis_result = {}
+
+        ## For each file in the dataset, use the information saved in self.analysis data to
+        ## do something, and save it to the output dictonary.
+
+        qspec_freqs, qspec_errs, qspec_fwhms = self.get_all_qspec_freq(
+            self.analysis_data["qspec_probe_freqs"] , 
+            self.analysis_data["I"] , 
+            self.analysis_data["Q"] , 
+            self.analysis_data["n"] , 
+            plot_idxs=False if "plot_idxs" not in self.ana_params.keys() else self.ana_params["plot_idxs"], 
+            )
+
+        analysis_result["qspec_freqs"] = qspec_freqs
+        analysis_result["qspec_errs"]  = qspec_errs
+        analysis_result["qspec_fwhms"] = qspec_fwhms
+
+        ## Save the output dictionary to the class instance and then return it
+        self.analysis_result = analysis_result
+        return analysis_result
+
 
     def fit_qspec(self, I, Q, freqs):
         mag = np.sqrt(np.square(I) + np.square(Q))
@@ -79,9 +130,13 @@ class qspec:
 
 def qspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, selected_round=[10, 73]):
 
-    qspec_ge = qspec(data_dir, dataset, QubitIndex)
-    qspec_dates, qspec_n, qspec_probe_freqs, qspec_I, qspec_Q = qspec_ge.load_all()
-    qspec_freqs, qspec_errs, qspec_fwhms = qspec_ge.get_all_qspec_freq(qspec_probe_freqs, qspec_I, qspec_Q, qspec_n, plot_idxs=selected_round)
-    start_time = qspec_dates[0]
+    ana_params = {
+        "plot_idxs": selected_round,
+    }
 
-    return qspec_dates, qspec_freqs
+    qspec_ge = AnaQSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)
+    data = qspec_ge.load_all()
+    result = qspec_ge.run_analysis(verbose=True)
+    qspec_ge.cleanup()
+    del qspec_ge
+    return data["dates"], result["qspec_freqs"]

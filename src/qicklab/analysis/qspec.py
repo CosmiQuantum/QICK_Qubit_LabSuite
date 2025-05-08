@@ -90,7 +90,6 @@ class AnaQSpec(AnalysisClass):
         self.analysis_result = analysis_result
         return analysis_result
 
-
     def fit_qspec(self, I, Q, freqs):
         mag = np.sqrt(np.square(I) + np.square(Q))
         freqs = np.array(freqs)

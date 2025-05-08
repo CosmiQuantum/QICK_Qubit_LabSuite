@@ -8,6 +8,7 @@ from .plot_tools import *
 from .shot_tools import *
 from .stark_tools import *
 
+
 ## Specific analysis classes go here
 from .AnalysisClass import AnalysisClass
 from .auto_threshold import AnaAutoThreshold, auto_threshold_demo

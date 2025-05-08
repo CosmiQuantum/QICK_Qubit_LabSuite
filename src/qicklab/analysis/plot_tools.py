@@ -2,10 +2,10 @@
 plotting.py
 ===========
 
-This module contains functions for plotting various types of processing data,
+This module contains functions for plotting various types of analysis data,
 including spectroscopy, scatter plots, histograms with Gaussian fits, cumulative
 distributions, error vs. value scatter plots, Allan deviation, and Welch spectral
-density. The module is designed for use with experimental data processing and
+density. The module is designed for use with experimental data analysis and
 provides several helper routines to create high-quality figures.
 
 Dependencies:
@@ -19,7 +19,7 @@ Dependencies:
     - create_folder_if_not_exists from ..utils.file_helpers
 
 Usage Example:
-    from qicklab.processing.plotting import plot_spectroscopy, plot_allan_deviation
+    from qicklab.analysis.plotting import plot_spectroscopy, plot_allan_deviation
     # Prepare your data and then call the desired plotting functions.
 """
 

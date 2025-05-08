@@ -7,9 +7,6 @@ data_utils.py
 import re, ast
 import numpy as np
 
-
-
-
 ## ================= String Conversion Methods ================= ##
 
 def is_numeric_string(s):
@@ -206,50 +203,6 @@ def remove_none_values(y_vals, x_vals, additional=None):
         filtered_list1, filtered_list2 = zip(*filtered_data) if filtered_data else ([], [])
 
         return list(filtered_list1), list(filtered_list2)
-# ------------------ Helper Functions for Data Processing ------------------
-
-
-
-
-# def process_h5_data(data):
-#     """
-#     Process a string containing numeric data by filtering out unwanted characters.
-
-#     The function removes newline characters and keeps only digits, minus signs, dots, spaces, and the letter 'e'
-#     (for exponential notation), then converts the resulting tokens to floats.
-
-#     Parameters:
-#         data (str): String containing numeric data.
-
-#     Returns:
-#         list: A list of floats extracted from the string.
-#     """
-#     # Replace newline characters with a space.
-#     data = data.replace('\n', ' ')
-#     # Keep only valid numeric characters.
-#     cleaned_data = ''.join(c for c in data if c.isdigit() or c in ['-', '.', ' ', 'e'])
-#     # Split the cleaned string and convert each part to float.
-#     numbers = [float(x) for x in cleaned_data.split() if x]
-#     return numbers
-
-def process_h5_data(data):
-    ## From Joyce
-    # Check if the data is a byte string; decode if necessary.
-    if isinstance(data, bytes):
-        data_str = data.decode()
-    elif isinstance(data, str):
-        data_str = data
-    else:
-        raise ValueError("Unsupported data type. Data should be bytes or string.")
-
-    data_str = data_str.strip().replace('\n', ' ')
-
-    # Remove extra whitespace and non-numeric characters.
-    cleaned_data = ''.join(c for c in data_str if c.isdigit() or c in ['-', '.', ' ', 'e'])
-
-    # Split into individual numbers, removing empty strings.
-    numbers = [float(x) for x in cleaned_data.split() if x]
-    return numbers
 
 
 

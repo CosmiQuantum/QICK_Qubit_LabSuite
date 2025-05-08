@@ -3,12 +3,12 @@ import numpy as np
 
 from scipy.optimize import curve_fit
 
-from .fit_functions import exponential
+## QICKLAB methods
+from ..datahandling.datafile_tools import load_h5_data, process_h5_data
 from ..utils.ana_utils  import rotate_and_threshold
-from ..utils.data_utils import process_h5_data
-from ..utils.file_utils import load_from_h5_with_shotdata
-from .plot_tools import plot_shots, plot_t1_simple
+from .fit_functions import exponential
 from .fit_tools import fit_t1
+from .plot_tools import plot_shots, plot_t1_simple
 from .shot_tools import process_shots
 
 class t1:
@@ -33,13 +33,13 @@ class t1:
         I_shots = []
         Q_shots = []
 
-        load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_files[0]), 'T1', save_r=1)
+        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'T1', save_r=1)
         delay_times = process_h5_data(load_data['T1'][self.QubitIndex].get('Delay Times', [])[0][0].decode())
         steps = len(delay_times)
         reps = int(len(process_h5_data(load_data['T1'][self.QubitIndex].get('I', [])[0][0].decode()))/steps)
 
         for h5_file in h5_files:
-            load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'T1', save_r=1)
+            load_data = load_h5_data(os.path.join(data_path, h5_file), 'T1', save_r=1)
             dates.append(datetime.datetime.fromtimestamp(load_data['T1'][self.QubitIndex].get('Dates', [])[0][0]))
 
             I_shots.append(np.array(process_h5_data(load_data['T1'][self.QubitIndex].get('I', [])[0][0].decode())).reshape([reps, steps]))

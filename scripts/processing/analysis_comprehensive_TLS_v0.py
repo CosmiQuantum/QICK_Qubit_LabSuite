@@ -111,6 +111,7 @@ if analysis_flags["load_all_data"]:
         "stark_constant": res_stark_constant[QubitIndex],
         "thresholding": True
     }
+    print(ana_params)
 
     rstark = AnaResStarkSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)
 

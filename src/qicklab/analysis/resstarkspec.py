@@ -9,54 +9,102 @@ from .shot_tools import process_shots
 from .stark_tools import gain2freq_resonator
 
 
-class resstarkspec:
+class AnaResStarkSpec(AnalysisClass):
 
-    def __init__(self, data_dir, dataset, QubitIndex, stark_constant, theta, threshold, folder = "study_data", expt_name = "res_starkspec_ge", thresholding=True):
+    required_ana_keys = ["theta", "threshold", "stark_constant"]
+    optional_ana_keys = ["thresholding"]
+
+    def __init__(self, data_dir, dataset, qubit_index, folder="study_data", expt_name="res_starkspec_ge", datagroup='starkSpec', ana_params={}):
+        ## Save the arguments to the class
         self.data_dir = data_dir
         self.dataset = dataset
-        self.QubitIndex = QubitIndex
-        self.stark_constant = stark_constant
-        self.folder = folder
+        self.datagroup = datagroup
+        self.qubit_index = qubit_index
         self.expt_name = expt_name
-        self.theta = theta
-        self.threshold = threshold
-        self.thresholding = thresholding
+        self.folder = folder
 
-    def load_all(self):
-        data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
-        h5_files.sort()
-        n = len(h5_files)
+        ## Check the analysis params keys against the required keys
+        for req_key in self.required_ana_keys:
+            if req_key not in ana_params.keys(): 
+                raise KeyError("ERROR: required keys not found in ana_params: "+",".join(self.required_ana_keys))
+        self.ana_params = ana_params
+
+    def load_all(self, verbose=False):
+        ## Create a container for the output
+        analysis_data = {}
+
+        ## Find all the H5 files for this dataset
+        h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
         dates = []
         I_shots = []
         Q_shots = []
         P = []
 
-        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'starkSpec', save_r=1)
-        gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
-        steps = len(gain_sweep)
-        reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
-
+        ## For each file in the dataset, load the data, pull specific data fields,
+        ## and save it to the output dictonary.
         for h5_file in h5_files:
-            load_data = load_h5_data(os.path.join(data_path, h5_file), 'starkSpec', save_r=1)
-            dates.append(datetime.datetime.fromtimestamp(load_data['starkSpec'][self.QubitIndex].get('Dates', [])[0][0]))
 
-            I_shots.append(np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape(
-                    [reps, steps]))
-            Q_shots.append(np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Q', [])[0][0].decode())).reshape(
-                    [reps, steps]))
-            P.append(np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('P', [])[0][0].decode())))
+            ## Load the selected H5 data into a dictionary, pull the frequency info from the first one
+            load_data = load_h5_data(os.path.join(data_path, h5_file), self.datagroup, save_r=1)
 
-        return dates, n, gain_sweep, steps, reps, I_shots, Q_shots, P
+            if i==0:
+                gain_sweep = get_data_field(load_data, self.datagroup, self.qubit_index, 'Gain Sweep')
+                steps = len(gain_sweep)
+                reps = int(len(get_data_field(load_data, self.datagroup, self.qubit_index, 'I')) / steps)
+
+            ## For every file add its I, Q, and P
+            timestamps = get_data_field(load_data, self.datagroup, self.qubit_index, 'Dates')
+            I_shots.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'I'), steps=steps, reps=reps)
+            Q_shots.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'Q'), steps=steps, reps=reps)
+            P.append(get_data_field(load_data, self.datagroup, self.qubit_index, 'P'))
+
+            dates.append(datetime.datetime.fromtimestamp(load_data[self.datagroup][self.qubit_index].get('Dates', [])[0][0]))
+
+        ## Save the necessary data to the dictionary
+        analysis_data["dates"] = dates
+        analysis_data["n"] = n
+        analysis_data["gain_sweep"] = gain_sweep
+        analysis_data["steps"] = steps
+        analysis_data["reps"] = reps
+        analysis_data["I"] = I_shots
+        analysis_data["Q"] = Q_shots
+        analysis_data["P"] = P
+
+        ## Save the output dictionary to the class instance and then return it
+        self.analysis_data = analysis_data
+        return analysis_data
+
+    def run_analysis(self, verbose=False):
+        ## Create a container for the output
+        analysis_result = {}
+
+        ## For each file in the dataset, use the information saved in self.analysis data to
+        ## do something, and save it to the output dictonary.
+
+        rstark_p_excited = self.process_shots(
+            self.analysis_data["I"] , 
+            self.analysis_data["Q"] , 
+            self.analysis_data["n"] , 
+            self.analysis_data["steps"] , 
+            )
+
+        rstark_freqs = self.gain2freq(self.analysis_data["gain_sweep"])
+
+        analysis_result["rstark_p_excited"] = rstark_p_excited
+        analysis_result["rstark_freqs"]  = rstark_freqs
+
+        ## Save the output dictionary to the class instance and then return it
+        self.analysis_result = analysis_result
+        return analysis_result
 
     def plot_shots(self, I_shots, Q_shots, gains, n, round=0, idx=10):
         this_I = I_shots[round][idx,:]
         this_Q = Q_shots[round][idx,:]
 
-        i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.theta, self.threshold)
+        i_new, q_new, states = rotate_and_threshold(this_I, this_Q, self.ana_params["theta"], self.ana_params["threshold"])
 
-        title = (f'dataset {self.dataset} qubit {self.QubitIndex} round {round + 1} of {n}: ' +
+        title = (f'dataset {self.dataset} qubit {self.qubit_index} round {round + 1} of {n}: ' +
                  f'rotated I,Q shots for res_stark_spec at gain: {np.round(gains[idx],2)}')
 
         _, _ = plot_shots(i_new, q_new, states, rotated=True, title=title)
@@ -70,7 +118,7 @@ class resstarkspec:
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):
         p_excited_in_round = p_excited[round]
 
-        title = (f'dataset {self.dataset} qubit {self.QubitIndex + 1} round {round + 1} of {n}: ' + 
+        title = (f'dataset {self.dataset} qubit {self.qubit_index + 1} round {round + 1} of {n}: ' + 
                   ' resonator stark spectroscopy')
         if plot: _, _ = plot_stark_simple(gains, self.gain2freq(gains), p_excited_in_round, title=title)
 
@@ -78,12 +126,16 @@ class resstarkspec:
 
 
 def resstarkspec_demo(data_dir, dataset='2025-04-15_21-24-46', QubitIndex=0, res_stark_constant=-17, threshold=-1285.08904, theta=0.17681, selected_round=[10, 73]):
-    rstark = resstarkspec(data_dir, dataset, QubitIndex, res_stark_constant, theta, threshold)
-    rstark_dates, rstark_n, rstark_gains, rstark_steps, rstark_reps, rstark_I_shots, rstark_Q_shots, rstark_P = rstark.load_all()
-    rstark_p_excited = rstark.process_shots(rstark_I_shots, rstark_Q_shots, rstark_n, rstark_steps)
-    rstark_freqs = rstark.gain2freq(rstark_gains)
+    ana_params = {
+        "theta": theta,
+        "threshold": threshold,
+        "stark_constant": res_stark_constant,
+        "thresholding": False
+    }
 
-    outdata = {}
-    for rnd in selected_round:
-        outdata[rnd] = rstark.get_p_excited_in_round(rstark_gains, rstark_p_excited, rstark_n, rnd, plot=True)
-    return outdata
+    rstark = AnaResStarkSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)
+    data = rstark.load_all()
+    result = rstark.run_analysis(verbose=True)
+    rstark.cleanup()
+    del rstark
+    return data["dates"], data["n"], data["gain_sweep"], result["rstark_p_excited"], result["rstark_freqs"]

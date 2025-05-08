@@ -56,8 +56,6 @@ class AnaQSpec(AnalysisClass):
 
             dates.append(datetime.datetime.fromtimestamp(load_data[self.datagroup][self.qubit_index].get('Dates', [])[0][0]))
 
-        # return dates, n, qspec_probe_freqs, I, Q
-
         ## Save the necessary data to the dictionary
         analysis_data["dates"] = dates
         analysis_data["n"] = n

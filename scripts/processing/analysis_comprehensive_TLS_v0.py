@@ -1,11 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from qicklab.analysis import AnaQSpec, t1, ssf, resstarkspec, starkspec, AnaAutoThreshold
+from qicklab.analysis import AnaQSpec, t1, ssf, AnaResStarkSpec, starkspec, AnaAutoThreshold
 from qicklab.utils import get_abs_min
 
 ############### set values here ###################
-# data_dir = "/Users/joycecs/PycharmProjects/PythonProject/.venv/QUIET/QUIET_data/RR_comprehensive_TLS/" #update based on file transfer location from Ryan
 data_dir = "/exp/cosmiq/data/QUIET/QICK_data/run6/6transmon/TLS_Comprehensive_Study/source_off_substudy1/" #update based on file transfer location from Ryan
 dataset = '2025-04-15_21-24-46'
 
@@ -58,7 +57,6 @@ if analysis_flags["load_all_data"]:
     data = qspec_ge.load_all()
     result = qspec_ge.run_analysis(verbose=True)
 
-
     start_time = data["dates"][0]
     qspec_dates = data["dates"]
     qspec_probe_freqs = data["qspec_probe_freqs"]
@@ -88,11 +86,29 @@ if analysis_flags["load_all_data"]:
     hgqspec_dates, hgqspec_n, hgqspec_probe_freqs, hgqspec_I, hgqspec_Q = hgqspec.load_all()
     hgqspec_mag = np.sqrt(np.square(hgqspec_I) + np.square(hgqspec_Q))
 
+    ## =============================== ResStark =============================== ##
     print("Loading resonator Stark spec data...")
-    rstark = resstarkspec(data_dir, dataset, QubitIndex, res_stark_constant[QubitIndex], theta, threshold)
-    rstark_dates, rstark_n, rstark_gains, rstark_steps, rstark_reps, rstark_I_shots, rstark_Q_shots, rstark_P = rstark.load_all()
-    rstark_p_excited = rstark.process_shots(rstark_I_shots, rstark_Q_shots, rstark_n, rstark_steps)
-    rstark_freqs = rstark.gain2freq(rstark_gains)
+    ana_params = {
+        "theta": theta,
+        "threshold": threshold,
+        "stark_constant": res_stark_constant[QubitIndex],
+        "thresholding": False
+    }
+
+    rstark = AnaResStarkSpec(data_dir, dataset, QubitIndex, ana_params=ana_params)
+
+    data = rstark.load_all()
+    result = rstark.run_analysis(verbose=True)
+
+    rstark_dates = data["dates"]
+    rstark_n = data["n"]
+    rstark_gains = data["gain_sweep"]
+    rstark_p_excited = result["rstark_p_excited"]
+    rstark_freqs = result["rstark_freqs"]
+
+    rstark.cleanup()
+    del rstark
+    
 
     print("Loading detuning Stark spec data...")
     stark = starkspec(data_dir, dataset, QubitIndex, duffing_constant[QubitIndex], theta, threshold, anharmonicity[QubitIndex], detuning[QubitIndex])

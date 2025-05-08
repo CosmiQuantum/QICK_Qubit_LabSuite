@@ -13,7 +13,7 @@ from .stark_tools import *
 from .AnalysisClass import AnalysisClass
 from .auto_threshold import AnaAutoThreshold, auto_threshold_demo
 from .qspec import AnaQSpec, qspec_demo
-from .resstarkspec import resstarkspec, resstarkspec_demo
+from .resstarkspec import AnaResStarkSpec, resstarkspec_demo
 from .ssf import ssf, ssf_demo
 from .starkspec import starkspec, starkspec_demo
 from .t1 import t1, t1_demo

@@ -44,7 +44,9 @@ class AnaAutoThreshold(AnalysisClass):
         h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
         ## Determine which file we care aboout
-        idx = 0 if "idx" not in self.ana_params.keys() else self.ana_params["idx"]
+        idx = 0 if "idx" not in self.ana_params.keys() else int(self.ana_params["idx"])
+
+        print(idx, h5_files[idx])
 
         ## Load the selected H5 data into a dictionary
         # load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), self.datagroup, save_r=1)

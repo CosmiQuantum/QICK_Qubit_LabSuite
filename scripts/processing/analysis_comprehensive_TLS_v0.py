@@ -62,6 +62,7 @@ if analysis_flags["load_all_data"]:
     qspec_probe_freqs = data["qspec_probe_freqs"]
     qspec_I = data["I"]
     qspec_Q = data["Q"]
+    qspec_n = data["n"]
     qspec_mag = np.sqrt(np.square(qspec_I)+np.square(qspec_Q))
 
     qspec_freqs = result["qspec_freqs"]

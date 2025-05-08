@@ -81,10 +81,26 @@ if analysis_flags["load_all_data"]:
     t1_p_excited = t1_ge.process_shots(t1_I_shots, t1_Q_shots, t1_n, t1_steps)
     t1s, t1_errs = t1_ge.get_all_t1(delay_times, t1_p_excited, t1_n)
 
+    ## =============================== HG QSPEC =============================== ##
     print("Loading HGqspec data...")
-    hgqspec = qspec(data_dir, dataset, QubitIndex, expt_name="high_gain_qspec_ge")
-    hgqspec_dates, hgqspec_n, hgqspec_probe_freqs, hgqspec_I, hgqspec_Q = hgqspec.load_all()
+
+    ana_params = {
+        "plot_idxs": selected_round,
+    }
+
+    hgqspec = AnaQSpec(data_dir, dataset, QubitIndex, expt_name="high_gain_qspec_ge", ana_params=ana_params)
+    
+    data = qspec_ge.load_all()
+    result = qspec_ge.run_analysis(verbose=True)
+
+    hgqspec_dates = data["dates"]
+    hgqspec_probe_freqs = data["qspec_probe_freqs"]
+    hgqspec_I = data["I"]
+    hgqspec_Q = data["Q"]
     hgqspec_mag = np.sqrt(np.square(hgqspec_I) + np.square(hgqspec_Q))
+
+    qspec_ge.cleanup()
+    del qspec_ge
 
     ## =============================== ResStark =============================== ##
     print("Loading resonator Stark spec data...")

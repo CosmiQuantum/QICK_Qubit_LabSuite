@@ -58,7 +58,7 @@ class DataAggregator:
         self.ndatasets = len(goodruns)
         return goodruns, goodpaths 
 
-    def run_analysis(AnalysisClass, qubit_index, analysis_params={}, datasets=None, datapaths=None, verbose=False):
+    def run_analysis(self, AnalysisClass, qubit_index, analysis_params={}, datasets=None, datapaths=None, verbose=False):
 
         ## Check the datasets and paths
         if (datasets is not None) and (datapaths is not None):

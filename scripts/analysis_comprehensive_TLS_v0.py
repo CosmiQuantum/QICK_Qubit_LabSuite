@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from qicklab.analysis import rspec, qspec, t1, ssf, resstarkspec, starkspec, auto_threshold, ampRabi
+from qicklab.analysis import rspec, qspec, t1, ssf, resstarkspec, starkspec, auto_threshold, amp_rabi
 from qicklab.utils import get_abs_min
 
 ############### set values here ###################
@@ -113,7 +113,7 @@ if analysis_flags["load_optimization_data"]:
 
     try:
         print("Loading optimization amp_rabi_ge data...")
-        amp_rabi_ge = ampRabi(data_dir, dataset, QubitIndex, folder="optimization")
+        amp_rabi_ge = amp_rabi(data_dir, dataset, QubitIndex, folder="optimization")
         rabi_dates, rabi_n, rabi_gains, rabi_I, rabi_Q = amp_rabi_ge.load_all()
         pi_amps = amp_rabi_ge.get_all_pi_amp(rabi_gains, rabi_I, rabi_Q, rabi_n)
     except Exception:

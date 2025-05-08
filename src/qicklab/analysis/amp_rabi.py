@@ -10,7 +10,7 @@ from ..utils.file_utils import load_from_h5_with_shotdata
 from .data_tools import get_h5_for_qubit
 
 
-class ampRabi:
+class amp_rabi:
 
     def __init__(self,data_dir, dataset, QubitIndex, folder="study_data", expt_name ="rabi_ge"):
         self.data_dir = data_dir

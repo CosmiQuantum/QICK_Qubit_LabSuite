@@ -13,8 +13,8 @@ substudy = 'source_off_substudy1'
 dataset = '2025-04-15_21-24-46'
 
 QubitIndex = 0 #zero indexed
-analysis_flags = {"get_threshold": True, "load_all_data": True, "timestream": True, "round": True}
-selected_round = [0]
+analysis_flags = {"get_threshold": False, "load_all_data": True, "timestream": False, "round": False, "ssf_rounds": True}
+selected_round = [10, 20, 30, 40, 50]
 threshold = -920 #overwritten when get_threshold flag is set to True
 theta = -2.27 #overwritten when get_threshold flag is set to True
 sz=10 #fontsize for plots
@@ -105,12 +105,11 @@ if analysis_flags["timestream"]:
         plot.set_title("stark spec data error")
 
 if analysis_flags["round"]:
-    print("Generating timestream plots...")
-    fig, ax = plt.subplots(2,3, layout='constrained')
-    fig.suptitle(f'{substudy} dataset {dataset} qubit {QubitIndex + 1} timestream')
+    print("Generating individual round plots...")
 
     for round in selected_round:
-
+        fig, ax = plt.subplots(2, 3, layout='constrained')
+        fig.suptitle(f'{substudy} dataset {dataset} qubit {QubitIndex + 1} round {round}')
         # stark spec data #
         try:
             row = 0
@@ -154,6 +153,38 @@ if analysis_flags["round"]:
             plot.set_aspect("equal")
         except Exception:
             plot.set_title("ssf_ge data error", fontsize=sz)
+
+if analysis_flags["ssf_rounds"]:
+    print("Generating ssf rounds plots...")
+    fig, ax = plt.subplots(2, len(selected_round), layout='constrained')
+    fig.suptitle(f'{substudy} dataset {dataset} qubit {QubitIndex + 1}')
+
+    idx = 0
+    for round in selected_round:
+
+            plot = ax[0][idx]
+            theta0, threshold0, fid0, ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye = ssf_ge.get_ssf_in_round(
+                I_g, Q_g, I_e, Q_e, round)
+            plot.scatter(ig_new, qg_new, c='b', label='g', s=2)
+            plot.scatter(ie_new, qe_new, c='r', label='e', s=2)
+            plot.set_title(f'ssf_ge round {round} threshold = {np.round(threshold0, 2)}', fontsize=sz)
+            plot.scatter(xg, yg, c='k', s=6)
+            plot.scatter(xe, ye, c='k', s=6)
+            plot.set_xlabel('I [a.u.]', fontsize=sz)
+            plot.set_ylabel('Q [a.u.]', fontsize=sz)
+            plot.plot([threshold0, threshold0], [np.min(qe_new), np.max(qe_new)], 'k:', linewidth=2)
+            plot.legend(fontsize=sz)
+            plot.set_aspect("equal")
+
+            plot = ax[1][idx]
+            xlims = [np.min(ig_new), np.max(ie_new)]
+            ng, binsg, pg = plot.hist(ig_new, bins=100, range=xlims, color='b', label='g', alpha=0.5)
+            ne, binse, pe = plot.hist(ie_new, bins=100, range=xlims, color='r', label='e', alpha=0.5)
+            plot.plot([threshold0, threshold0], [0, np.max(ne) * 1.2], 'k:', linewidth=2)
+            plot.set_xlabel('I [a.u.]', fontsize=sz)
+            plot.set_title(f'ssf_ge: fidelity = {np.round(fid0, 2) * 100} %', fontsize=sz)
+
+            idx = idx + 1
 
 
 plt.show()

@@ -27,8 +27,6 @@ class ssf:
         Q_g = []
         I_e = []
         Q_e = []
-        #fid = []
-        #theta = []
 
         for h5_file in h5_files:
             load_data = load_from_h5_with_shotdata(os.path.join(data_path, h5_file), 'SS', save_r=1)
@@ -38,8 +36,6 @@ class ssf:
             Q_g.append(process_h5_data(load_data['SS'][self.QubitIndex].get('Q_g', [])[0][0].decode()))
             I_e.append(process_h5_data(load_data['SS'][self.QubitIndex].get('I_e', [])[0][0].decode()))
             Q_e.append(process_h5_data(load_data['SS'][self.QubitIndex].get('Q_e', [])[0][0].decode()))
-            #fid.append(load_data['SS'][self.QubitIndex].get('Fidelity', [])[0])
-            #theta.append(load_data['SS'][self.QubitIndex].get('Angle', [])[0])
 
         return dates, n, I_g, Q_g, I_e, Q_e #fid, theta
 
@@ -65,7 +61,7 @@ class ssf:
         xe, ye = np.median(ie_new), np.median(qe_new)
 
         ## compute threshold
-        threshold = np.mean([xg, xe])
+        #threshold = np.mean([xg, xe])
 
         ng, binsg = np.histogram(ig_new, bins=numbins, range=xlims)
         ne, binse = np.histogram(ie_new, bins=numbins, range=xlims)
@@ -73,6 +69,7 @@ class ssf:
         ## compute fidelity using overlap of histograms
         contrast = np.abs(((np.cumsum(ng) - np.cumsum(ne)) / (0.5 * ng.sum() + 0.5 * ne.sum())))
         tind = contrast.argmax()
+        threshold = binsg[tind]
         fid = contrast[tind]
 
         return theta, threshold, fid, ig_new, qg_new, ie_new, qe_new, xg, yg, xe, ye

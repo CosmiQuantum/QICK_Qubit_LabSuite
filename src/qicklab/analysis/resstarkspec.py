@@ -117,7 +117,7 @@ class AnaResStarkSpec(AnalysisClass):
             thresholding=True if "thresholding" not in self.ana_params.keys() else self.ana_params["thresholding"])
 
     def gain2freq(self, gains):
-        return gain2freq_resonator(gains, self.stark_constant)
+        return gain2freq_resonator(gains, self.ana_params["stark_constant"])
 
     def get_p_excited_in_round(self, gains, p_excited, n, round, plot=True):
         p_excited_in_round = p_excited[round]

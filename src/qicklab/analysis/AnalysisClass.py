@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 from ..datahandling.datafile_tools import find_h5_files, load_h5_data, get_data_field

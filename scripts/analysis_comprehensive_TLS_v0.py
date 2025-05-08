@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from qicklab.analysis import qspec, t1, ssf, resstarkspec, starkspec, auto_threshold
+from qicklab.analysis import qspec, t1, ssf, resstarkspec, starkspec, AnaAutoThreshold
 from qicklab.utils import get_abs_min
 
 ############### set values here ###################
@@ -22,9 +22,26 @@ detuning = [20, 10, 10, 10, 10, 10]
 
 if analysis_flags["get_threshold"]:
     print("Determining threshold...")
-    auto = auto_threshold(data_dir, dataset, QubitIndex)
-    I_shots, Q_shots = auto.load_sample()
-    theta, threshold, i_new, q_new = auto.get_threshold(I_shots, Q_shots, plot=True)
+
+    ana_params = {
+        "idx" : 0,
+        "plot": True,
+    }
+
+    auto = AnaAutoThreshold(data_dir, dataset, QubitIndex, ana_params=ana_params)
+    data = auto.load_all()
+    result = auto.run_analysis(verbose=True)
+
+    I_shots = data[data.keys()[0]]["I"]
+    Q_shots = data[data.keys()[0]]["Q"]
+
+    theta = result[data.keys()[0]]["theta"]
+    threshold = result[data.keys()[0]]["threshold"]
+    i_new = result[data.keys()[0]]["I_new"]
+    q_new = result[data.keys()[0]]["Q_new"]
+
+    auto.cleanup()
+    del auto
 
 if analysis_flags["load_all_data"]:
     print("Loading qspec data...")

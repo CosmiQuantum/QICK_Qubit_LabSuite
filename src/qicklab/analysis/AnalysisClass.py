@@ -7,7 +7,7 @@ from ..datahandling.datafile_tools import find_h5_files, load_h5_data, get_data_
 class AnalysisClass:
 
     required_ana_keys = []
-    optional_ana_keys = ['datagroup']
+    optional_ana_keys = []
 
 
     def __init__(self, data_dir, dataset, qubit_index, folder="study_data", expt_name="qspec_ge", datagroup='QSpec', ana_params={}):

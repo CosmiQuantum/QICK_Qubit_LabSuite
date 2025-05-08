@@ -50,11 +50,11 @@ class AnaAutoThreshold(AnalysisClass):
         # load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), self.datagroup, save_r=1)
         load_data = load_h5_data(os.path.join(data_path, h5_files[idx]), 'starkSpec', save_r=1)
 
-        print(load_data[self.datagroup].keys(), ":", load_data[self.datagroup][self.qubit_index].keys())
+        # print(load_data[self.datagroup].keys(), ":", load_data[self.datagroup][self.qubit_index].keys())
 
         ## Pull the gain sweep info and determine how many steps there are
         # gain_sweep = get_data_field(load_data, self.datagroup, self.qubit_index, 'Gain Sweep')
-        gain_sweep = get_data_field(load_data, 'starkSpec', self.QubitIndex, 'Gain Sweep')
+        gain_sweep = get_data_field(load_data, 'starkSpec', self.qubit_index, 'Gain Sweep')
 
         # gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)

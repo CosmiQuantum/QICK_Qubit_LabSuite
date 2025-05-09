@@ -21,7 +21,8 @@ class auto_threshold:
         self.expt_name = expt_name
         self.folder = folder
 
-    def load_sample(self, idx=0):
+    def load_sample(self, idx=0, step_idx=0):
+
         h5_files, data_path, n = find_h5_files(self.data_dir, self.dataset, self.expt_name, folder=self.folder)
 
         ## Load the H5 data into a dictionary
@@ -32,8 +33,7 @@ class auto_threshold:
 
         # gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
-        step_idx = int(steps/2)
-
+        
         ## Load the I and Q data
         I_shots = get_data_field(load_data, 'starkSpec', self.QubitIndex, 'I')
         Q_shots = get_data_field(load_data, 'starkSpec', self.QubitIndex, 'Q')
@@ -42,11 +42,8 @@ class auto_threshold:
         I_shots = I_shots.reshape([steps, reps])
         Q_shots = Q_shots.reshape([steps, reps])
 
-        # reps = int(len(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())) / steps)
-        # I_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('I', [])[0][0].decode())).reshape([steps, reps])
-        # Q_shots = np.array(process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Q', [])[0][0].decode())).reshape([steps, reps])
-
         return I_shots[step_idx], Q_shots[step_idx]
+
 
     def get_threshold(self, I_shots, Q_shots, plot=True, verbose=False):
         ## Setup and evaluate the clustering algorithm to find the unrotated centroids

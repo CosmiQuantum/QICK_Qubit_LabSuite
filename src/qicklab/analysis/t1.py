@@ -10,6 +10,7 @@ from .fit_functions import exponential
 from .fit_tools import fit_t1
 from .plot_tools import plot_shots, plot_t1_simple
 from .shot_tools import process_shots
+from .data_tools import get_h5_for_qubit
 
 class t1:
 
@@ -25,7 +26,8 @@ class t1:
 
     def load_all(self):
         data_path = os.path.join(self.data_dir, self.dataset, self.folder, "Data_h5", self.expt_name)
-        h5_files = os.listdir(data_path)
+        h5_files_all_qubits = os.listdir(data_path)
+        h5_files = get_h5_for_qubit(data_path, h5_files_all_qubits, self.QubitIndex, 'T1')
         h5_files.sort()
         n = len(h5_files)
 
@@ -48,7 +50,6 @@ class t1:
         return dates, n, delay_times, steps, reps, I_shots, Q_shots
 
     def plot_shots(self, I_shots, Q_shots, delay_times, n, round=0, idx=10):
-        # print(np.shape(I_shots))
 
         this_I = I_shots[round][:,idx]
         this_Q = Q_shots[round][:,idx]

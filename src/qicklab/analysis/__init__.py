@@ -12,8 +12,10 @@ from .stark_tools import *
 ## Specific analysis classes go here
 from .AnalysisClass import AnalysisClass
 from .auto_threshold import auto_threshold, auto_threshold_demo
+from .rspec import rspec
 from .qspec import qspec, qspec_demo
 from .resstarkspec import resstarkspec, resstarkspec_demo
 from .ssf import ssf, ssf_demo
 from .starkspec import starkspec, starkspec_demo
 from .t1 import t1, t1_demo
+from .amp_rabi import amp_rabi

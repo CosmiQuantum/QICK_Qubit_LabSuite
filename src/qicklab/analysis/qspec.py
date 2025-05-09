@@ -6,7 +6,8 @@ from scipy.optimize import curve_fit
 ## QICKLAB methods
 from ..datahandling.datafile_tools import find_h5_files, load_h5_data, process_h5_data, get_data_field
 from .plot_tools import plot_qspec_simple
-from .fit_tools import fit_lorenzian
+from .fit_tools import fit_lorentzian
+from .data_tools import get_h5_for_qubit
 
 class qspec:
     def __init__(self, data_dir, dataset, QubitIndex, folder="study_data", expt_name="qspec_ge"):
@@ -23,22 +24,14 @@ class qspec:
         I = []
         Q = []
 
-        load_data = load_h5_data(os.path.join(data_path, h5_files[0]), 'QSpec', save_r=1)
-
         for i,h5_file in enumerate(h5_files):
 
             load_data = load_h5_data(os.path.join(data_path, h5_file), 'QSpec', save_r=1)
             if i==0: qspec_probe_freqs = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Frequencies')
-
             timestamps = get_data_field(load_data, 'QSpec', self.QubitIndex, 'Dates')
-            # dates.append(datetime.datetime.fromtimestamp(timestamps))
             I.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'I'))
             Q.append(get_data_field(load_data, 'QSpec', self.QubitIndex, 'Q'))
-
             dates.append(datetime.datetime.fromtimestamp(load_data['QSpec'][self.QubitIndex].get('Dates', [])[0][0]))
-
-            # I.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('I', [])[0][0].decode())))
-            # Q.append(np.array(process_h5_data(load_data['QSpec'][self.QubitIndex].get('Q', [])[0][0].decode())))
 
         return dates, n, qspec_probe_freqs, I, Q
 
@@ -46,7 +39,7 @@ class qspec:
         mag = np.sqrt(np.square(I) + np.square(Q))
         freqs = np.array(freqs)
         freq_q = freqs[np.argmax(mag)]
-        qfreq, qfreq_err, fwhm, qspec_fit, qspec_fit_amp = fit_lorenzian(mag, freqs, freq_q)
+        qfreq, qfreq_err, fwhm, qspec_fit, qspec_fit_amp = fit_lorentzian(mag, freqs, freq_q)
         return qfreq, qfreq_err, fwhm, qspec_fit
 
     def get_qspec_freq_in_round(self, qspec_probe_freqs, I, Q, round, n, plot=False):

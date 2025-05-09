@@ -5,6 +5,13 @@ fit_functions.py
 
 import numpy as np
 
+def cosine( x, a, b, c, d):
+    """
+       Cosine function for curve fitting.
+    """
+    x = np.array(x)
+    return a * np.cos(2. * np.pi * b * x - c * 2 * np.pi) + d
+
 def exponential(x, a, b, c, d):
     """
     Exponential function for curve fitting.

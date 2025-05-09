@@ -14,6 +14,7 @@ Dependencies:
     - scipy.stats (for norm)
     - scipy.signal (for welch)
     - scipy.optimize.curve_fit
+    - sklearn.mixture (for double gaussian fit)
     - allantools (for Allan deviation)
     - datetime, os, math
     - create_folder_if_not_exists from ..utils.file_helpers
@@ -48,6 +49,7 @@ from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import convert_datetimes_to_seconds
 from ..datahandling.datafile_tools import DATETIME_FMT
 from  .fit_functions import allan_deviation_model
+from .fit_functions import ssf_fit_two_gaussians_midpoint
 
 def plot_shots(Ivals, Qvals, states, rotated=False, title=None, ax=None):
     if ax is None: fig, ax = plt.subplots()
@@ -105,7 +107,7 @@ def plot_ssf_ge_thresh(QubitIndex: int, ig_new: np.ndarray, ie_new: np.ndarray, 
     os.makedirs(plotting_path, exist_ok=True)
 
     # fit & extract numbers
-    thresh, means, sigmas, weights, ground_idx, excited_idx = self.ssf_fit_two_gaussians_midpoint(ig_new, ie_new)
+    thresh, means, sigmas, weights, ground_idx, excited_idx = ssf_fit_two_gaussians_midpoint(ig_new, ie_new)
 
     # plot to check things fitted correctly
     fig, ax = plt.subplots(figsize=(7, 4))

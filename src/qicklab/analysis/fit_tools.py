@@ -163,8 +163,8 @@ def fit_lorentzian_IQ(I, Q, freqs, metric_freq, signal='None', verbose=False):
         If an error occurs during the fit, returns a tuple of None values.
     """
     try:
-        mean_I, fit_err_I, fwhm_I, I_fit, amp_I_fit = fit_lorenzian(I, freqs, metric_freq)
-        mean_Q, fit_err_Q, fwhm_Q, Q_fit, amp_Q_fit = fit_lorenzian(Q, freqs, metric_freq)
+        mean_I, fit_err_I, fwhm_I, I_fit, amp_I_fit = fit_lorentzian(I, freqs, metric_freq)
+        mean_Q, fit_err_Q, fwhm_Q, Q_fit, amp_Q_fit = fit_lorentzian(Q, freqs, metric_freq)
 
         # Choose which curve to report based on the signal indicator or amplitude difference
         if 'None' in signal:

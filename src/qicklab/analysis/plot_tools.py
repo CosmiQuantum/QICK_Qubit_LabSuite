@@ -3,10 +3,10 @@ plotting.py
 ===========
 
 This module contains functions for plotting various types of analysis data,
-including spectroscopy, scatter plots, histograms with Gaussian fits, cumulative
-distributions, error vs. value scatter plots, Allan deviation, and Welch spectral
-density. The module is designed for use with experimental data analysis and
-provides several helper routines to create high-quality figures.
+including spectroscopy, scatter plots, histograms with Gaussian fits, single shot fidelity
+histograms fitted to double gaussians, cumulative distributions, error vs. value scatter plots, 
+Allan deviation, and Welch spectral density. The module is designed for use with experimental 
+data analysis and provides several helper routines to create high-quality figures.
 
 Dependencies:
     - numpy
@@ -14,6 +14,7 @@ Dependencies:
     - scipy.stats (for norm)
     - scipy.signal (for welch)
     - scipy.optimize.curve_fit
+    - sklearn.mixture (for double gaussian fit)
     - allantools (for Allan deviation)
     - datetime, os, math
     - create_folder_if_not_exists from ..utils.file_helpers
@@ -33,7 +34,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.dates as mdates
 
+from matplotlib.ticker import MaxNLocator
 from matplotlib.ticker import StrMethodFormatter
+
+from sklearn.mixture import GaussianMixture
 
 from scipy.stats import norm
 from scipy.signal import welch, lombscargle
@@ -45,6 +49,7 @@ from ..utils.file_utils import create_folder_if_not_exists
 from ..utils.time_utils import convert_datetimes_to_seconds
 from ..datahandling.datafile_tools import DATETIME_FMT
 from  .fit_functions import allan_deviation_model
+from .fit_tools import ssf_fit_two_gaussians_midpoint
 
 def plot_shots(Ivals, Qvals, states, rotated=False, title=None, ax=None):
     if ax is None: fig, ax = plt.subplots()
@@ -92,7 +97,76 @@ def plot_stark_simple(gains, freqs, p_excited, title=None, ax=None):
     if title is not None: fig.suptitle(title)
     return fig, ax
 
+def plot_ssf_ge_thresh(QubitIndex: int, ig_new: np.ndarray, ie_new: np.ndarray, plotting_path: str, numbins: int = 64, figure_quality: int = 200):
+    """
+    Plots the SSF data + the two gaussian fits + the means of the gaussians + the g-e threshold for visualization.
+    ig_new is the rotated I data for the ground state in a g-e SSF measurement.
+    ie_new is the rotated I data for the first excited state in a g-e SSF measurement.
+    QubitIndex is expected to start at 0 for qubit 1 and so forth.
+    """
+    os.makedirs(plotting_path, exist_ok=True)
 
+    # fit & extract numbers
+    thresh, means, sigmas, weights, ground_idx, excited_idx = ssf_fit_two_gaussians_midpoint(ig_new, ie_new)
+
+    # plot to check things fitted correctly
+    fig, ax = plt.subplots(figsize=(7, 4))
+    all_i = np.concatenate([ig_new, ie_new])
+
+    # Optional: for  histogram of *all* shots (does not show population overlaps), uncomment if needed.
+    # n, edges, _ = ax.hist(all_i, bins=numbins, alpha=0.35, color="grey", label="all shots")
+    # counts, edges = np.histogram(all_i, bins=numbins) # just extracting edges
+
+    # Plot g and e histograms separately (shows populations that overlap)
+    edges = np.linspace(all_i.min(), all_i.max(), numbins + 1)
+    ax.hist(ig_new, bins=edges, alpha=0.55, color="royalblue", label="g-state")
+    ax.hist(ie_new, bins=edges, alpha=0.55, color="crimson", label="e-state")
+    
+    x_grid = np.linspace(all_i.min(), all_i.max(), 400)
+    g_pdf = (weights[ground_idx] /
+             (np.sqrt(2 * np.pi) * sigmas[ground_idx]) *
+             np.exp(-0.5 * ((x_grid - means[ground_idx]) /
+                                sigmas[ground_idx]) ** 2))
+    e_pdf = (weights[excited_idx] /
+             (np.sqrt(2 * np.pi) * sigmas[excited_idx]) *
+             np.exp(-0.5 * ((x_grid - means[excited_idx]) /
+                            sigmas[excited_idx]) ** 2))
+
+    # Component‑specific scaling, to plot the y-axis in counts instead of probability densities
+    counts_g, _ = np.histogram(ig_new, bins=edges)
+    counts_e, _ = np.histogram(ie_new, bins=edges)
+    
+    peak_g = counts_g.max()
+    peak_e = counts_e.max()
+    
+    # factor that makes the PDF peak equal the tallest bar
+    scale_g = peak_g / g_pdf.max()
+    scale_e = peak_e / e_pdf.max()
+
+    ax.plot(x_grid, g_pdf * scale_g, color="blue", lw=2,
+            label="ground Gaussian")
+    ax.plot(x_grid, e_pdf * scale_e, color="red", lw=2,
+            label="excited Gaussian")
+
+    # vertical markers
+    ax.axvline(means[ground_idx], color="blue", ls="--")
+    ax.axvline(means[excited_idx], color="red", ls="--")
+    ax.axvline(thresh, color="black", ls=":",
+               label=f"threshold = {thresh:.2f}")
+
+    ax.set_title(f"Q{QubitIndex + 1}")
+    ax.set_xlabel("I'  (rotated)")
+    ax.set_ylabel("Counts")
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.legend(frameon=False)
+    fig.tight_layout()
+
+    fname = os.path.join(plotting_path,
+                         f"Q{QubitIndex + 1}_midpoint_fit_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.png")
+    fig.savefig(fname, dpi=figure_quality)
+    plt.close(fig)
+
+    print('Plots saved to:', plotting_path)
 
 
 

@@ -2,12 +2,13 @@
 fitting.py
 
 This module provides functions for performing curve fitting on experimental data.
-It includes functions to fit an exponential decay (for T1 measurements) and Lorentzian curves,
-as well as helper routines used in the fitting process.
+It includes functions to fit an exponential decay (for T1 measurements), Lorentzian curves,
+single-shot fidelity data to a double gaussian, as well as helper routines used in the fitting process.
 
 Dependencies:
     - numpy
     - matplotlib
+    - sklearn.mixture
     - scipy.optimize.curve_fit
     - create_folder_if_not_exists from this package's utils.file_helpers module
 
@@ -18,9 +19,9 @@ Usage Example:
     T1_est, T1_err = t1_fit(I, Q, delay_times, signal='I')
     largest_amp_curve_mean, I_fit, Q_fit, fit_err = get_lorentzian_fits(I, Q, freqs)
 """
-
 import os
 import datetime
+from sklearn.mixture import GaussianMixture
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -243,6 +244,40 @@ def fit_amp_rabi(signal, gains):
 
     return pi_amp, q1_fit_cosine
 
+def ssf_fit_two_gaussians_midpoint(ig_new: np.ndarray, ie_new: np.ndarray):
+        """
+        Fits a two component GMM (double gaussian) to all shots (ig_new + ie_new)from an ssf file
+        and chooses the threshold as the midpoint between the two component means.
+
+        ig_new is the rotated I data for the ground state in a g-e SSF measurement.
+        ie_new is the rotated I data for the first excited state in a g-e SSF measurement.        
+
+        Returns
+        -------
+        thresh           : (μ_g + μ_e) / 2
+        means, sigmas    : np.ndarray shape (2,)
+        weights          : np.ndarray shape (2,)
+        ground_idx       : component index for ground cluster
+        excited_idx      : component index for excited cluster
+        """
+
+        # Fit a 2‑component Gaussian mixture
+        all_i = np.concatenate([ig_new, ie_new]).reshape(-1, 1)
+
+        gmm = GaussianMixture(n_components=2, covariance_type="full")
+        gmm.fit(all_i)
+
+        means = gmm.means_.flatten()
+        sigmas = np.sqrt(gmm.covariances_).flatten()
+        weights = gmm.weights_
+
+        ground_idx, excited_idx = np.argsort(means)  # smaller mean = ground
+        mu_g, mu_e = means[ground_idx], means[excited_idx]
+
+        # Mid‑point threshold
+        threshold = 0.5 * (mu_g + mu_e)
+
+        return threshold, means, sigmas, weights, ground_idx, excited_idx
 
 
 

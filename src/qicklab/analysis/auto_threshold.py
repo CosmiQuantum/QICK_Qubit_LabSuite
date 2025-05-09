@@ -56,7 +56,7 @@ class AnaAutoThreshold(AnalysisClass):
 
         # gain_sweep = process_h5_data(load_data['starkSpec'][self.QubitIndex].get('Gain Sweep', [])[0][0].decode())
         steps = len(gain_sweep)
-        step_idx = int(steps/2)
+        step_idx = 0 # int(steps/2)
         del gain_sweep
 
         ## Load the I and Q data
